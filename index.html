@@ -56,21 +56,26 @@
             font-size: 0.5rem;
             opacity: 0.6;
         }
-        .mini-mode-btn {
+        .header-btns {
+            display: flex;
+            gap: 4px;
+        }
+        .mini-mode-btn, .energy-toggle-btn {
             background: #1a2a1a;
             border: 1px solid #0f0;
             color: #0f0;
-            font-size: 0.55rem;
-            padding: 4px 8px;
+            font-size: 0.5rem;
+            padding: 4px 6px;
             border-radius: 15px;
             cursor: pointer;
             transition: all 0.1s;
+            white-space: nowrap;
         }
-        .mini-mode-btn:active {
+        .mini-mode-btn:active, .energy-toggle-btn:active {
             background: #0f0;
             color: #000;
         }
-        .mini-mode-btn.active {
+        .mini-mode-btn.active, .energy-toggle-btn.active {
             background: #0f0;
             color: #000;
         }
@@ -231,9 +236,12 @@
         }
         .live-stats-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr;
             gap: 4px;
             margin: 4px 0;
+        }
+        .live-stats-grid.with-energy {
+            grid-template-columns: 1fr 1fr;
         }
         .mini-stat {
             background: rgba(0,255,0,0.03);
@@ -316,8 +324,11 @@
         }
         .stats-10s-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr;
             gap: 4px;
+        }
+        .stats-10s-grid.with-energy {
+            grid-template-columns: 1fr 1fr;
         }
         .timeline-panel {
             background: linear-gradient(135deg, #0a0a0a, #0d1a0d);
@@ -330,9 +341,12 @@
         }
         .timeline-stats-top {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr;
             gap: 4px;
             margin-bottom: 6px;
+        }
+        .timeline-stats-top.with-energy {
+            grid-template-columns: 1fr 1fr;
         }
         .timeline-stat {
             background: rgba(0,255,0,0.03);
@@ -520,7 +534,9 @@
             color: #1a3a1a;
             padding: 2px;
         }
-        /* Мини-режим */
+        .energy-hidden {
+            display: none !important;
+        }
         .mini-overlay {
             position: fixed;
             top: 10px;
@@ -563,7 +579,10 @@
             <h1>🔊 СПЕКТРАЛЬНЫЙ АНАЛИЗАТОР PRO</h1>
             <div class="sub">В реальном времени · Длительность · Громкость</div>
         </div>
-        <button class="mini-mode-btn" id="miniModeBtn" title="Мини-режим">📱</button>
+        <div class="header-btns">
+            <button class="energy-toggle-btn active" id="energyToggleBtn" title="Скрыть/показать громкость">🔊</button>
+            <button class="mini-mode-btn" id="miniModeBtn" title="Мини-режим">📱</button>
+        </div>
     </div>
     <div class="control-bar">
         <button id="startBtn" class="main-btn">▶ СТАРТ</button>
@@ -579,14 +598,14 @@
         <div class="current-freq" id="currentFreq">— Гц</div>
         <div class="current-note" id="currentNote">—</div>
         <div class="freq-description" id="freqDescription"></div>
-        <div class="live-stats-grid">
-            <div class="mini-stat">
+        <div class="live-stats-grid with-energy" id="liveStatsGrid">
+            <div class="mini-stat" id="liveDurationStat">
                 <div class="mini-stat-label">📊 По длительности</div>
                 <div class="mini-stat-value" id="liveDurationFreq">— Гц</div>
                 <div class="mini-stat-note" id="liveDurationNote">—</div>
                 <div class="top-freqs" id="liveDurationTop"></div>
             </div>
-            <div class="mini-stat">
+            <div class="mini-stat energy-stat" id="liveEnergyStat">
                 <div class="mini-stat-label">🔊 По громкости</div>
                 <div class="mini-stat-value" id="liveEnergyFreq">— Гц</div>
                 <div class="mini-stat-note" id="liveEnergyNote">—</div>
@@ -603,14 +622,14 @@
     </div>
     <div class="stats-10s">
         <div class="stats-10s-title">⏱ ПОСЛЕДНИЕ 10 СЕКУНД</div>
-        <div class="stats-10s-grid">
-            <div class="mini-stat">
+        <div class="stats-10s-grid with-energy" id="stats10sGrid">
+            <div class="mini-stat" id="last10sDurationStat">
                 <div class="mini-stat-label">📊 По длительности</div>
                 <div class="mini-stat-value" id="last10sDurationFreq">— Гц</div>
                 <div class="mini-stat-note" id="last10sDurationNote">—</div>
                 <div class="top-freqs" id="last10sDurationTop"></div>
             </div>
-            <div class="mini-stat">
+            <div class="mini-stat energy-stat" id="last10sEnergyStat">
                 <div class="mini-stat-label">🔊 По громкости</div>
                 <div class="mini-stat-value" id="last10sEnergyFreq">— Гц</div>
                 <div class="mini-stat-note" id="last10sEnergyNote">—</div>
@@ -619,14 +638,14 @@
         </div>
     </div>
     <div class="timeline-panel">
-        <div class="timeline-stats-top">
-            <div class="timeline-stat">
+        <div class="timeline-stats-top with-energy" id="timelineStatsTop">
+            <div class="timeline-stat" id="timelineDurationStat">
                 <div class="timeline-stat-label">📊 По длительности</div>
                 <div class="timeline-stat-value" id="timelineDurationFreq">— Гц</div>
                 <div class="mini-stat-note" id="timelineDurationNote">—</div>
                 <div class="top-freqs" id="timelineDurationTop"></div>
             </div>
-            <div class="timeline-stat">
+            <div class="timeline-stat energy-stat" id="timelineEnergyStat">
                 <div class="timeline-stat-label">🔊 По громкости</div>
                 <div class="timeline-stat-value" id="timelineEnergyFreq">— Гц</div>
                 <div class="mini-stat-note" id="timelineEnergyNote">—</div>
@@ -1051,13 +1070,14 @@
     let mediaStream = null, audioCtx = null, source = null, analyser = null;
     let segmentAcc = SEGMENTS.map(() => ({ sumFreqWeight: 0, sumWeight: 0, finalized: false, result: 0, durHist: {}, engHist: {} }));
     let timeSeriesData = [], globalHistogram = {}, last10sHistory = [];
-    let allDetectedFreqs = new Map(); // freq -> {addedTime, state, totalDuration}
-    let freqDurations = {}; // freq -> totalDuration in seconds
+    let allDetectedFreqs = new Map();
+    let freqDurations = {};
     let logBinsCount = 48, logBinEdges = [], noiseFloorDB = -60, lastProcessedTime = 0;
     let timelinePosition = 0, isDraggingTimeline = false;
     let currentGain = 0;
     let savedSessions = JSON.parse(localStorage.getItem('freqSessions') || '[]');
     let isMiniMode = false;
+    let showEnergy = false; // По умолчанию громкость скрыта
     
     const els = {
         startBtn: document.getElementById('startBtn'), stopBtn: document.getElementById('stopBtn'), saveBtn: document.getElementById('saveBtn'),
@@ -1071,12 +1091,16 @@
         gainFill: document.getElementById('gainFill'), gainLabel: document.getElementById('gainLabel'),
         freqTooltip: document.getElementById('freqTooltip'),
         miniModeBtn: document.getElementById('miniModeBtn'),
+        energyToggleBtn: document.getElementById('energyToggleBtn'),
         miniOverlay: document.getElementById('miniOverlay'),
         miniFreq: document.getElementById('miniFreq'),
         miniNote: document.getElementById('miniNote'),
         miniLongest: document.getElementById('miniLongest'),
         miniClose: document.getElementById('miniClose'),
         mainContainer: document.getElementById('mainContainer'),
+        liveStatsGrid: document.getElementById('liveStatsGrid'),
+        stats10sGrid: document.getElementById('stats10sGrid'),
+        timelineStatsTop: document.getElementById('timelineStatsTop'),
         liveDurationFreq: document.getElementById('liveDurationFreq'), liveDurationNote: document.getElementById('liveDurationNote'), liveDurationTop: document.getElementById('liveDurationTop'),
         liveEnergyFreq: document.getElementById('liveEnergyFreq'), liveEnergyNote: document.getElementById('liveEnergyNote'), liveEnergyTop: document.getElementById('liveEnergyTop'),
         last10sDurationFreq: document.getElementById('last10sDurationFreq'), last10sDurationNote: document.getElementById('last10sDurationNote'), last10sDurationTop: document.getElementById('last10sDurationTop'),
@@ -1084,6 +1108,24 @@
         timelineDurationFreq: document.getElementById('timelineDurationFreq'), timelineDurationNote: document.getElementById('timelineDurationNote'), timelineDurationTop: document.getElementById('timelineDurationTop'),
         timelineEnergyFreq: document.getElementById('timelineEnergyFreq'), timelineEnergyNote: document.getElementById('timelineEnergyNote'), timelineEnergyTop: document.getElementById('timelineEnergyTop')
     };
+    
+    function updateEnergyVisibility() {
+        const grids = [els.liveStatsGrid, els.stats10sGrid, els.timelineStatsTop];
+        const energyStats = document.querySelectorAll('.energy-stat');
+        
+        if (showEnergy) {
+            grids.forEach(g => g.classList.add('with-energy'));
+            energyStats.forEach(s => s.classList.remove('energy-hidden'));
+            els.energyToggleBtn.classList.add('active');
+            els.energyToggleBtn.textContent = '🔊';
+        } else {
+            grids.forEach(g => g.classList.remove('with-energy'));
+            energyStats.forEach(s => s.classList.add('energy-hidden'));
+            els.energyToggleBtn.classList.remove('active');
+            els.energyToggleBtn.textContent = '🔇';
+        }
+    }
+    updateEnergyVisibility();
     
     function initLogBins(){const minFreq=30,maxFreq=5000;logBinEdges=[];for(let i=0;i<=logBinsCount;i++)logBinEdges.push(minFreq*Math.pow(maxFreq/minFreq,i/logBinsCount));}initLogBins();
     function freqToNote(f){if(f<25)return'—';const n=["До","До#","Ре","Ре#","Ми","Фа","Фа#","Соль","Соль#","Ля","Ля#","Си"];let s=12*Math.log2(f/440)+69,o=Math.floor(Math.round(s)/12)-1,i=((Math.round(s)%12)+12)%12;return n[i]+o;}
@@ -1129,42 +1171,21 @@
     
     function updateDetectedFreqsDisplay(){
         const now = Date.now();
-        let changed = false;
-        for (const [freq, data] of allDetectedFreqs) {
-            const age = now - data.addedTime;
-            if (data.state === 'active' && age > DISPLAY_TIMEOUT) { data.state = 'fading'; changed = true; }
-            if (data.state === 'fading' && age > DISPLAY_TIMEOUT + FADE_DURATION) { allDetectedFreqs.delete(freq); changed = true; }
-        }
-        
-        // Получаем топ-3 по длительности
         const topFreqs = getTopFreqsByDuration(3);
         const topFreqSet = new Set(topFreqs.map(t => t.freq));
         
-        // Оставляем только топ-3 в allDetectedFreqs
         for (const [freq] of allDetectedFreqs) {
-            if (!topFreqSet.has(freq)) {
-                allDetectedFreqs.delete(freq);
-                changed = true;
-            }
+            if (!topFreqSet.has(freq)) allDetectedFreqs.delete(freq);
         }
         
-        // Добавляем топ-3 если их нет
         for (const {freq, duration} of topFreqs) {
-            if (!allDetectedFreqs.has(freq)) {
-                allDetectedFreqs.set(freq, { addedTime: now, state: 'active', totalDuration: duration });
-                changed = true;
-            } else {
-                allDetectedFreqs.get(freq).totalDuration = duration;
-                allDetectedFreqs.get(freq).addedTime = now;
-                allDetectedFreqs.get(freq).state = 'active';
-            }
+            allDetectedFreqs.set(freq, { addedTime: now, state: 'active', totalDuration: duration });
         }
         
         if (allDetectedFreqs.size === 0) {
-            if (els.detectedFreqs.innerHTML !== '') { els.detectedFreqs.innerHTML = ''; }
+            if (els.detectedFreqs.innerHTML !== '') els.detectedFreqs.innerHTML = '';
             return;
         }
-        if (!changed && els.detectedFreqs.children.length === allDetectedFreqs.size) return;
         
         els.detectedFreqs.innerHTML = topFreqs.map(({freq, duration}) => {
             const cls = 'detected-freq-tag longest';
@@ -1176,15 +1197,8 @@
         }).join('');
         
         els.detectedFreqs.querySelectorAll('.detected-freq-tag').forEach(tag => {
-            tag.addEventListener('click', e => {
-                const freq = parseFloat(tag.dataset.freq);
-                showTooltip(e, freq);
-            });
-            tag.addEventListener('touchend', e => {
-                const freq = parseFloat(tag.dataset.freq);
-                showTooltip(e, freq);
-                setTimeout(hideTooltip, 3000);
-            });
+            tag.addEventListener('click', e => { showTooltip(e, parseFloat(tag.dataset.freq)); });
+            tag.addEventListener('touchend', e => { showTooltip(e, parseFloat(tag.dataset.freq)); setTimeout(hideTooltip, 3000); });
         });
     }
     
@@ -1210,9 +1224,9 @@
     function getHistogramFromHistory(history){const h={};for(let i=1;i<history.length;i++){const dt=history[i].time-history[i-1].time;if(dt>0&&dt<0.5){const rf=roundFreq(history[i].freq),e=history[i].amp*history[i].amp*dt;if(!h[rf])h[rf]={totalDuration:0,totalEnergy:0};h[rf].totalDuration+=dt;h[rf].totalEnergy+=e;}}return h;}
     function getLast10sStats(){if(last10sHistory.length<2)return{dom:{duration:{freq:0},energy:{freq:0}},hist:{}};const h=getHistogramFromHistory(last10sHistory);return{dom:getDominantsFromHistogram(h),hist:h};}
     function getIntervalStats(ts,te){if(timeSeriesData.length<2)return{dom:{duration:{freq:0},energy:{freq:0}},hist:{}};const h={};for(let i=1;i<timeSeriesData.length;i++){if(timeSeriesData[i].time>=ts&&timeSeriesData[i].time<=te){const dt=timeSeriesData[i].time-timeSeriesData[i-1].time;if(dt>0&&dt<0.5){const rf=roundFreq(timeSeriesData[i].freq),e=(timeSeriesData[i].weight/10)*dt;if(!h[rf])h[rf]={totalDuration:0,totalEnergy:0};h[rf].totalDuration+=dt;h[rf].totalEnergy+=e;}}}return{dom:getDominantsFromHistogram(h),hist:h};}
-    function updateAllStats(){const gd=getDominantsFromHistogram(globalHistogram);const gTargets=getTopTargetsFromHistogram(globalHistogram);els.liveDurationFreq.innerText=gd.duration.freq>0?gd.duration.freq.toFixed(1)+" Гц":"— Гц";els.liveDurationNote.innerText=freqToNote(gd.duration.freq);els.liveDurationTop.innerText=topTargetsToString(gTargets,'duration');els.liveEnergyFreq.innerText=gd.energy.freq>0?gd.energy.freq.toFixed(1)+" Гц":"— Гц";els.liveEnergyNote.innerText=freqToNote(gd.energy.freq);els.liveEnergyTop.innerText=topTargetsToString(gTargets,'energy');const l10=getLast10sStats();const l10Targets=getTopTargetsFromHistogram(l10.hist);els.last10sDurationFreq.innerText=l10.dom.duration.freq>0?l10.dom.duration.freq.toFixed(1)+" Гц":"— Гц";els.last10sDurationNote.innerText=freqToNote(l10.dom.duration.freq);els.last10sDurationTop.innerText=topTargetsToString(l10Targets,'duration');els.last10sEnergyFreq.innerText=l10.dom.energy.freq>0?l10.dom.energy.freq.toFixed(1)+" Гц":"— Гц";els.last10sEnergyNote.innerText=freqToNote(l10.dom.energy.freq);els.last10sEnergyTop.innerText=topTargetsToString(l10Targets,'energy');updateTimelineStats();updateTimelineCanvas();updateDetectedFreqsDisplay();updateMiniOverlay();}
-    function updateTimelineStats(){const tt=timeSeriesData.length>0?timeSeriesData[timeSeriesData.length-1].time:0;const ws=2;let ts=Math.max(0,timelinePosition-ws/2),te=Math.min(tt,timelinePosition+ws/2);if(tt<2){ts=0;te=tt;}const s=getIntervalStats(ts,te);const tTargets=getTopTargetsFromHistogram(s.hist);els.timelineDurationFreq.innerText=s.dom.duration.freq>0?s.dom.duration.freq.toFixed(1)+" Гц":"— Гц";els.timelineDurationNote.innerText=freqToNote(s.dom.duration.freq);els.timelineDurationTop.innerText=topTargetsToString(tTargets,'duration');els.timelineEnergyFreq.innerText=s.dom.energy.freq>0?s.dom.energy.freq.toFixed(1)+" Гц":"— Гц";els.timelineEnergyNote.innerText=freqToNote(s.dom.energy.freq);els.timelineEnergyTop.innerText=topTargetsToString(tTargets,'energy');}
-    function renderSegments(){let comp=segmentAcc.filter(s=>s.finalized&&s.result>0).length;els.segCount.innerText=comp;els.segmentsList.innerHTML=SEGMENTS.map((seg,i)=>{const d=segmentAcc[i],sc=d.finalized?'completed':'pending',sd=`<span class="status-dot ${sc}"></span>`;let topStr='';if(d.finalized){const durTargets=getTopTargetsFromHistogram(d.durHist||{});const engTargets=getTopTargetsFromHistogram(d.engHist||{});const durTop=topTargetsToString(durTargets,'duration');const engTop=topTargetsToString(engTargets,'energy');if(durTop||engTop)topStr=`<div class="segment-top">${durTop}${engTop?' | '+engTop:''}</div>`;}if(d.finalized)return`<div class="segment-row"><span class="segment-name">${sd}${seg.name}</span><span class="segment-freq">${d.result>0?d.result.toFixed(1)+' Гц':'—'}</span><span class="segment-note">${freqToNote(d.result)}</span>${topStr}</div>`;return`<div class="segment-row"><span class="segment-name">${sd}${seg.name}</span><span class="segment-freq">анализ...</span><span class="segment-note">—</span></div>`;}).join('');}
+    function updateAllStats(){const gd=getDominantsFromHistogram(globalHistogram);const gTargets=getTopTargetsFromHistogram(globalHistogram);els.liveDurationFreq.innerText=gd.duration.freq>0?gd.duration.freq.toFixed(1)+" Гц":"— Гц";els.liveDurationNote.innerText=freqToNote(gd.duration.freq);els.liveDurationTop.innerText=topTargetsToString(gTargets,'duration');if(showEnergy){els.liveEnergyFreq.innerText=gd.energy.freq>0?gd.energy.freq.toFixed(1)+" Гц":"— Гц";els.liveEnergyNote.innerText=freqToNote(gd.energy.freq);els.liveEnergyTop.innerText=topTargetsToString(gTargets,'energy');}const l10=getLast10sStats();const l10Targets=getTopTargetsFromHistogram(l10.hist);els.last10sDurationFreq.innerText=l10.dom.duration.freq>0?l10.dom.duration.freq.toFixed(1)+" Гц":"— Гц";els.last10sDurationNote.innerText=freqToNote(l10.dom.duration.freq);els.last10sDurationTop.innerText=topTargetsToString(l10Targets,'duration');if(showEnergy){els.last10sEnergyFreq.innerText=l10.dom.energy.freq>0?l10.dom.energy.freq.toFixed(1)+" Гц":"— Гц";els.last10sEnergyNote.innerText=freqToNote(l10.dom.energy.freq);els.last10sEnergyTop.innerText=topTargetsToString(l10Targets,'energy');}updateTimelineStats();updateTimelineCanvas();updateDetectedFreqsDisplay();updateMiniOverlay();}
+    function updateTimelineStats(){const tt=timeSeriesData.length>0?timeSeriesData[timeSeriesData.length-1].time:0;const ws=2;let ts=Math.max(0,timelinePosition-ws/2),te=Math.min(tt,timelinePosition+ws/2);if(tt<2){ts=0;te=tt;}const s=getIntervalStats(ts,te);const tTargets=getTopTargetsFromHistogram(s.hist);els.timelineDurationFreq.innerText=s.dom.duration.freq>0?s.dom.duration.freq.toFixed(1)+" Гц":"— Гц";els.timelineDurationNote.innerText=freqToNote(s.dom.duration.freq);els.timelineDurationTop.innerText=topTargetsToString(tTargets,'duration');if(showEnergy){els.timelineEnergyFreq.innerText=s.dom.energy.freq>0?s.dom.energy.freq.toFixed(1)+" Гц":"— Гц";els.timelineEnergyNote.innerText=freqToNote(s.dom.energy.freq);els.timelineEnergyTop.innerText=topTargetsToString(tTargets,'energy');}}
+    function renderSegments(){let comp=segmentAcc.filter(s=>s.finalized&&s.result>0).length;els.segCount.innerText=comp;els.segmentsList.innerHTML=SEGMENTS.map((seg,i)=>{const d=segmentAcc[i],sc=d.finalized?'completed':'pending',sd=`<span class="status-dot ${sc}"></span>`;let topStr='';if(d.finalized){const durTargets=getTopTargetsFromHistogram(d.durHist||{});const engTargets=getTopTargetsFromHistogram(d.engHist||{});const durTop=topTargetsToString(durTargets,'duration');const engTop=showEnergy?topTargetsToString(engTargets,'energy'):'';if(durTop||engTop)topStr=`<div class="segment-top">${durTop}${engTop?' | '+engTop:''}</div>`;}if(d.finalized)return`<div class="segment-row"><span class="segment-name">${sd}${seg.name}</span><span class="segment-freq">${d.result>0?d.result.toFixed(1)+' Гц':'—'}</span><span class="segment-note">${freqToNote(d.result)}</span>${topStr}</div>`;return`<div class="segment-row"><span class="segment-name">${sd}${seg.name}</span><span class="segment-freq">анализ...</span><span class="segment-note">—</span></div>`;}).join('');}
     function finalizeSegment(i){if(segmentAcc[i].finalized)return;segmentAcc[i].result=segmentAcc[i].sumWeight>0?segmentAcc[i].sumFreqWeight/segmentAcc[i].sumWeight:0;segmentAcc[i].finalized=true;renderSegments();}
     function addTimePoint(freq,w){if(freq<=0)return;timeSeriesData.push({time:(Date.now()-startTime)/1000,freq,weight:w});}
     function getEventX(e){return e.clientX||(e.touches&&e.touches[0].clientX);}
@@ -1232,6 +1246,13 @@
     async function keepScreenOn(){try{if('wakeLock' in navigator){await navigator.wakeLock.request('screen');}}catch(e){}}
     keepScreenOn();
     document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')keepScreenOn();});
+    
+    // Фоновая работа
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && isRunning) {
+            updateAllStats();
+        }
+    });
     
     // Мини-режим
     function toggleMiniMode() {
@@ -1288,6 +1309,7 @@
     
     els.miniModeBtn.onclick = toggleMiniMode;
     els.miniClose.onclick = toggleMiniMode;
+    els.energyToggleBtn.onclick = () => { showEnergy = !showEnergy; updateEnergyVisibility(); updateAllStats(); renderSegments(); };
     
     els.startBtn.onclick=start;els.stopBtn.onclick=stop;els.stopBtn.disabled=true;els.saveBtn.onclick=saveSession;
     window.loadSession=loadSession;
