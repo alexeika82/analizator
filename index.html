@@ -3,7 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
-    <title>UltraSensitive Frequency Analyzer Pro</title>
+    <title>Спектральный Анализатор Pro</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Анализатор">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
     <style>
         * {
             box-sizing: border-box;
@@ -16,6 +24,7 @@
             background: #000;
             color: #0f0;
             height: 100vh;
+            height: 100dvh;
             overflow-y: auto;
             overflow-x: hidden;
             display: flex;
@@ -41,44 +50,44 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 4px;
         }
         .header-text {
             flex: 1;
             text-align: center;
+            min-width: 100px;
         }
         h1 {
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             color: #0f0;
             letter-spacing: 1px;
             font-weight: 600;
         }
         .sub {
-            font-size: 0.5rem;
+            font-size: 0.4rem;
             opacity: 0.6;
         }
         .header-btns {
             display: flex;
-            gap: 4px;
+            gap: 2px;
+            flex-wrap: wrap;
         }
-        .mini-mode-btn, .energy-toggle-btn {
+        .icon-btn {
             background: #1a2a1a;
             border: 1px solid #0f0;
             color: #0f0;
-            font-size: 0.5rem;
-            padding: 4px 6px;
-            border-radius: 15px;
+            font-size: 0.45rem;
+            padding: 3px 5px;
+            border-radius: 12px;
             cursor: pointer;
             transition: all 0.1s;
             white-space: nowrap;
+            min-width: 32px;
+            text-align: center;
         }
-        .mini-mode-btn:active, .energy-toggle-btn:active {
-            background: #0f0;
-            color: #000;
-        }
-        .mini-mode-btn.active, .energy-toggle-btn.active {
-            background: #0f0;
-            color: #000;
-        }
+        .icon-btn:active { background: #0f0; color: #000; }
+        .icon-btn.active { background: #0f0; color: #000; }
         .control-bar {
             display: flex;
             gap: 6px;
@@ -95,30 +104,71 @@
             cursor: pointer;
             transition: all 0.1s;
         }
-        .main-btn:active {
-            background: #0f0;
-            color: #000;
-            transform: scale(0.97);
+        .main-btn:active { background: #0f0; color: #000; transform: scale(0.97); }
+        .main-btn:disabled { opacity: 0.3; border-color: #1a3a1a; }
+        .reset-btn { background: #1a0a0a; border: 1px solid #f00; color: #f00; }
+        .settings-panel {
+            background: linear-gradient(135deg, #0a0a0a, #0d1a0d);
+            border-radius: 12px;
+            padding: 8px 10px;
+            border: 1px solid #1a3a1a;
+            box-shadow: 0 2px 8px rgba(0,255,0,0.1);
+            display: none;
+            gap: 6px;
+            flex-direction: column;
         }
-        .main-btn:disabled {
-            opacity: 0.3;
-            border-color: #1a3a1a;
+        .settings-panel.show { display: flex; }
+        .setting-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .setting-label {
+            font-size: 0.5rem;
+            color: #0a0;
+            white-space: nowrap;
+        }
+        .setting-slider {
+            -webkit-appearance: none;
+            height: 4px;
+            background: #1a1a1a;
+            border-radius: 2px;
+            outline: none;
+            border: 1px solid #0f0;
+            flex: 1;
+        }
+        .setting-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #0f0;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .source-indicator {
+            font-size: 0.45rem;
+            background: #0a1a0a;
+            padding: 2px 8px;
+            border-radius: 10px;
+            opacity: 0.7;
+            display: inline-block;
+            margin-left: 4px;
         }
         .detected-freqs {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-            justify-content: center;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
             padding: 4px 0;
             min-height: 26px;
-            align-items: center;
+            align-items: start;
         }
         .detected-freq-tag {
             background: #0f0;
             color: #000;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 0.6rem;
+            padding: 5px 6px;
+            border-radius: 10px;
+            font-size: 0.55rem;
             font-weight: 700;
             border: 2px solid #0f0;
             animation: popIn 0.3s ease;
@@ -126,32 +176,29 @@
             transition: all 0.6s ease;
             cursor: pointer;
             text-align: center;
-            max-width: 120px;
+            word-break: break-word;
+            min-width: 0;
         }
         .detected-freq-tag .freq-duration {
             font-size: 0.4rem;
             opacity: 0.7;
             display: block;
-            text-align: center;
         }
         .detected-freq-tag .freq-desc-short {
             font-size: 0.38rem;
             opacity: 0.6;
             display: block;
-            text-align: center;
             margin-top: 1px;
-            line-height: 1.2;
             max-height: 20px;
             overflow: hidden;
-            text-overflow: ellipsis;
+            line-height: 1.2;
         }
-        .detected-freq-tag.fading {
-            opacity: 0.25;
-            background: #0a1a0a;
-            color: #0a0;
-            border-color: #1a3a1a;
-            box-shadow: 0 0 2px rgba(0,255,0,0.1);
-            transform: scale(0.9);
+        .detected-freq-tag .freq-color-name {
+            font-size: 0.38rem;
+            opacity: 0.8;
+            display: block;
+            margin-top: 1px;
+            font-style: italic;
         }
         .detected-freq-tag.longest {
             border-color: #ff0 !important;
@@ -160,14 +207,23 @@
             color: #ff0 !important;
             animation: glowPulse 1s infinite;
         }
+        .color-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-left: 4px;
+            border: 1px solid rgba(255,255,255,0.3);
+            vertical-align: middle;
+        }
         @keyframes popIn {
             0% { transform: scale(0); opacity: 0; }
             70% { transform: scale(1.15); }
             100% { transform: scale(1); opacity: 1; }
         }
         @keyframes glowPulse {
-            0%,100% { box-shadow: 0 0 15px rgba(255,255,0,0.6); }
-            50% { box-shadow: 0 0 30px rgba(255,255,0,1); }
+            0%,100% { box-shadow: 0 0 15px rgba(255,255,255,0.6); }
+            50% { box-shadow: 0 0 30px rgba(255,255,255,1); }
         }
         .freq-tooltip {
             position: fixed;
@@ -226,13 +282,17 @@
             font-size: 0.6rem;
             opacity: 0.8;
         }
-        .freq-description {
+        .current-color-info {
             text-align: center;
-            font-size: 0.45rem;
-            opacity: 0.65;
+            font-size: 0.5rem;
+            opacity: 0.7;
             margin-top: 2px;
-            min-height: 12px;
-            color: #0a0;
+            min-height: 18px;
+            line-height: 18px;
+        }
+        .current-color-info.placeholder {
+            opacity: 0.3;
+            font-style: italic;
         }
         .live-stats-grid {
             display: grid;
@@ -268,6 +328,15 @@
             border-radius: 6px;
             display: inline-block;
         }
+        .mini-stat-color {
+            font-size: 0.4rem;
+            opacity: 0.7;
+            font-style: italic;
+            display: block;
+            margin-top: 1px;
+            min-height: 14px;
+            line-height: 14px;
+        }
         .top-freqs {
             font-size: 0.4rem;
             opacity: 0.75;
@@ -275,6 +344,13 @@
             word-break: break-all;
             min-height: 10px;
             line-height: 1.3;
+        }
+        .main-freq-duration {
+            font-size: 0.45rem;
+            opacity: 0.85;
+            margin-top: 1px;
+            color: #ff0;
+            font-weight: 600;
         }
         .gain-meter {
             background: #000;
@@ -308,27 +384,6 @@
             font-size: 0.4rem;
             opacity: 0.5;
             padding: 0 2px;
-        }
-        .stats-10s {
-            background: linear-gradient(135deg, #0a0a0a, #0d1a0d);
-            border-radius: 12px;
-            padding: 5px 10px;
-            border: 1px solid #1a3a1a;
-            box-shadow: 0 2px 8px rgba(0,255,0,0.1);
-        }
-        .stats-10s-title {
-            font-size: 0.6rem;
-            font-weight: 600;
-            color: #0f0;
-            margin-bottom: 3px;
-        }
-        .stats-10s-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 4px;
-        }
-        .stats-10s-grid.with-energy {
-            grid-template-columns: 1fr 1fr;
         }
         .timeline-panel {
             background: linear-gradient(135deg, #0a0a0a, #0d1a0d);
@@ -385,7 +440,7 @@
         }
         .timeline-visual {
             position: relative;
-            height: 35px;
+            height: 60px;
             background: #000;
             border-radius: 8px;
             overflow: hidden;
@@ -421,17 +476,33 @@
             z-index: 11;
             white-space: nowrap;
         }
+        .review-badge {
+            position: absolute;
+            top: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.4rem;
+            background: #f00;
+            color: #fff;
+            padding: 1px 6px;
+            border-radius: 8px;
+            font-weight: 700;
+            pointer-events: none;
+            z-index: 12;
+            white-space: nowrap;
+            display: none;
+        }
         .sessions-panel {
             background: linear-gradient(135deg, #0a0a0a, #0d1a0d);
             border-radius: 12px;
             padding: 5px 8px;
             border: 1px solid #1a3a1a;
             box-shadow: 0 2px 8px rgba(0,255,0,0.1);
-            max-height: 80px;
+            max-height: 60px;
             overflow-y: auto;
         }
         .sessions-title {
-            font-size: 0.55rem;
+            font-size: 0.5rem;
             font-weight: 600;
             color: #0f0;
             margin-bottom: 2px;
@@ -440,109 +511,24 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 2px 4px;
+            padding: 1px 4px;
             border-bottom: 1px solid #0a1a0a;
-            font-size: 0.5rem;
+            font-size: 0.45rem;
             cursor: pointer;
         }
-        .session-row:hover {
-            background: rgba(0,255,0,0.05);
-        }
-        .session-date {
-            opacity: 0.7;
-        }
-        .session-duration {
-            font-family: monospace;
-        }
-        .session-freq {
-            font-weight: 600;
-            color: #0f0;
-        }
-        .segments-panel {
-            background: linear-gradient(135deg, #0a0a0a, #0d1a0d);
-            border-radius: 12px;
-            padding: 5px 8px;
-            border: 1px solid #1a3a1a;
-            box-shadow: 0 2px 8px rgba(0,255,0,0.1);
-            max-height: 140px;
-            overflow-y: auto;
-        }
-        .segments-header {
-            font-size: 0.55rem;
-            font-weight: 600;
-            color: #0f0;
-            margin-bottom: 2px;
-            display: flex;
-            justify-content: space-between;
-        }
-        .segment-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 2px 4px;
-            border-bottom: 1px solid #0a1a0a;
-            font-size: 0.55rem;
-            gap: 4px;
-            flex-wrap: wrap;
-        }
-        .segment-name {
-            font-weight: 600;
-            min-width: 30px;
-            color: #0f0;
-        }
-        .segment-freq {
-            font-family: monospace;
-            font-weight: 600;
-            font-size: 0.6rem;
-        }
-        .segment-note {
-            background: #1a2a1a;
-            padding: 1px 5px;
-            border-radius: 10px;
-            font-size: 0.45rem;
-        }
-        .segment-top {
-            font-size: 0.4rem;
-            opacity: 0.65;
-            width: 100%;
-            padding-left: 18px;
-            min-height: 8px;
-            line-height: 1.2;
-        }
-        .status-dot {
-            width: 5px;
-            height: 5px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 3px;
-        }
-        .status-dot.completed {
-            background: #0f0;
-            box-shadow: 0 0 4px #0f0;
-        }
-        .status-dot.pending {
-            background: #1a3a1a;
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse {
-            0%,100% { opacity: 0.3; }
-            50% { opacity: 0.8; }
-        }
         footer {
-            font-size: 0.4rem;
+            font-size: 0.35rem;
             text-align: center;
             color: #1a3a1a;
             padding: 2px;
         }
-        .energy-hidden {
-            display: none !important;
-        }
+        .energy-hidden { display: none !important; }
         .mini-overlay {
             position: fixed;
             top: 10px;
             right: 10px;
-            width: 150px;
-            background: rgba(0,0,0,0.9);
+            width: 160px;
+            background: rgba(0,0,0,0.95);
             border: 2px solid #0f0;
             border-radius: 15px;
             padding: 8px;
@@ -568,6 +554,13 @@
             font-size: 0.7rem;
             color: #f00;
         }
+        .notification-badge {
+            font-size: 0.4rem;
+            background: #0a1a0a;
+            padding: 1px 6px;
+            border-radius: 8px;
+            opacity: 0.6;
+        }
     </style>
 </head>
 <body>
@@ -576,41 +569,74 @@
     <div class="header">
         <span></span>
         <div class="header-text">
-            <h1>🔊 СПЕКТРАЛЬНЫЙ АНАЛИЗАТОР PRO</h1>
-            <div class="sub">В реальном времени · Длительность · Громкость</div>
+            <h1>🔊 АНАЛИЗАТОР PRO</h1>
+            <div class="sub">Фоновый режим · Системный звук · Уведомления</div>
         </div>
         <div class="header-btns">
-            <button class="energy-toggle-btn active" id="energyToggleBtn" title="Скрыть/показать громкость">🔊</button>
-            <button class="mini-mode-btn" id="miniModeBtn" title="Мини-режим">📱</button>
+            <button class="icon-btn" id="sourceBtn" title="Источник звука">🎤<span class="source-indicator" id="sourceIndicator">Микрофон</span></button>
+            <button class="icon-btn" id="bgModeBtn" title="Фоновый режим">📻</button>
+            <button class="icon-btn" id="settingsBtn" title="Настройки">⚙️</button>
+            <button class="icon-btn active" id="energyToggleBtn" title="Громкость">🔊</button>
+            <button class="icon-btn" id="pipBtn" title="Поверх окон">🖼</button>
+            <button class="icon-btn" id="miniModeBtn" title="Мини">📱</button>
+        </div>
+    </div>
+    <div class="settings-panel" id="settingsPanel">
+        <div class="setting-row">
+            <span class="setting-label">Частот сверху:</span>
+            <input type="range" class="setting-slider" id="topCountSlider" min="3" max="8" value="3" step="1">
+            <span class="setting-label" id="topCountValue">3</span>
+        </div>
+        <div class="setting-row">
+            <span class="setting-label">История шкалы:</span>
+            <input type="range" class="setting-slider" id="historySlider" min="5" max="60" value="20" step="5">
+            <span class="setting-label" id="historyValue">20 мин</span>
+        </div>
+        <div class="setting-row">
+            <span class="setting-label">Мин. длительность (с):</span>
+            <input type="range" class="setting-slider" id="minDurationSlider" min="0.1" max="2.0" value="0.1" step="0.1">
+            <span class="setting-label" id="minDurationValue">0.1с</span>
         </div>
     </div>
     <div class="control-bar">
         <button id="startBtn" class="main-btn">▶ СТАРТ</button>
         <button id="stopBtn" class="main-btn">⏹ СТОП</button>
-        <button id="saveBtn" class="main-btn">💾 Сохранить</button>
+        <button id="resetBtn" class="main-btn reset-btn">🔄 СБРОС</button>
+        <button id="saveBtn" class="main-btn">💾</button>
     </div>
     <div class="detected-freqs" id="detectedFreqs"></div>
     <div class="main-panel">
         <div class="timer-row">
             <span class="timer" id="timer">00:00:00</span>
             <span class="noise-badge">🔊 <span id="noiseFloor">-</span> дБ</span>
+            <span class="notification-badge" id="bgStatus"></span>
         </div>
         <div class="current-freq" id="currentFreq">— Гц</div>
         <div class="current-note" id="currentNote">—</div>
-        <div class="freq-description" id="freqDescription"></div>
+        <div class="current-color-info placeholder" id="currentColorInfo">🎨 Ожидание звука...</div>
         <div class="live-stats-grid with-energy" id="liveStatsGrid">
             <div class="mini-stat" id="liveDurationStat">
-                <div class="mini-stat-label">📊 По длительности</div>
+                <div class="mini-stat-label">📊 По длительности (всё время)</div>
                 <div class="mini-stat-value" id="liveDurationFreq">— Гц</div>
                 <div class="mini-stat-note" id="liveDurationNote">—</div>
+                <div class="mini-stat-color" id="liveDurationColor"></div>
+                <div class="main-freq-duration" id="liveDurationTime"></div>
                 <div class="top-freqs" id="liveDurationTop"></div>
             </div>
             <div class="mini-stat energy-stat" id="liveEnergyStat">
                 <div class="mini-stat-label">🔊 По громкости</div>
                 <div class="mini-stat-value" id="liveEnergyFreq">— Гц</div>
                 <div class="mini-stat-note" id="liveEnergyNote">—</div>
+                <div class="mini-stat-color" id="liveEnergyColor"></div>
                 <div class="top-freqs" id="liveEnergyTop"></div>
             </div>
+        </div>
+        <div class="mini-stat" id="last10sDurationStatInline">
+            <div class="mini-stat-label">📊 По длительности (10 секунд)</div>
+            <div class="mini-stat-value" id="last10sDurationFreq">— Гц</div>
+            <div class="mini-stat-note" id="last10sDurationNote">—</div>
+            <div class="mini-stat-color" id="last10sDurationColor"></div>
+            <div class="top-freqs" id="last10sDurationTop"></div>
         </div>
         <div class="gain-meter" id="gainMeter">
             <div class="gain-fill" id="gainFill" style="width:0%"></div>
@@ -620,35 +646,20 @@
             <span>30</span><span>100</span><span>500</span><span>2к</span><span>5к</span>
         </div>
     </div>
-    <div class="stats-10s">
-        <div class="stats-10s-title">⏱ ПОСЛЕДНИЕ 10 СЕКУНД</div>
-        <div class="stats-10s-grid with-energy" id="stats10sGrid">
-            <div class="mini-stat" id="last10sDurationStat">
-                <div class="mini-stat-label">📊 По длительности</div>
-                <div class="mini-stat-value" id="last10sDurationFreq">— Гц</div>
-                <div class="mini-stat-note" id="last10sDurationNote">—</div>
-                <div class="top-freqs" id="last10sDurationTop"></div>
-            </div>
-            <div class="mini-stat energy-stat" id="last10sEnergyStat">
-                <div class="mini-stat-label">🔊 По громкости</div>
-                <div class="mini-stat-value" id="last10sEnergyFreq">— Гц</div>
-                <div class="mini-stat-note" id="last10sEnergyNote">—</div>
-                <div class="top-freqs" id="last10sEnergyTop"></div>
-            </div>
-        </div>
-    </div>
     <div class="timeline-panel">
         <div class="timeline-stats-top with-energy" id="timelineStatsTop">
             <div class="timeline-stat" id="timelineDurationStat">
-                <div class="timeline-stat-label">📊 По длительности</div>
+                <div class="timeline-stat-label">📊 По длительности (в точке)</div>
                 <div class="timeline-stat-value" id="timelineDurationFreq">— Гц</div>
                 <div class="mini-stat-note" id="timelineDurationNote">—</div>
+                <div class="mini-stat-color" id="timelineDurationColor"></div>
                 <div class="top-freqs" id="timelineDurationTop"></div>
             </div>
             <div class="timeline-stat energy-stat" id="timelineEnergyStat">
                 <div class="timeline-stat-label">🔊 По громкости</div>
                 <div class="timeline-stat-value" id="timelineEnergyFreq">— Гц</div>
                 <div class="mini-stat-note" id="timelineEnergyNote">—</div>
+                <div class="mini-stat-color" id="timelineEnergyColor"></div>
                 <div class="top-freqs" id="timelineEnergyTop"></div>
             </div>
         </div>
@@ -665,472 +676,238 @@
             <div class="timeline-cursor" id="timelineCursor">
                 <div class="timeline-current-time" id="timelineCursorTime">0.0с</div>
             </div>
+            <div class="review-badge" id="reviewBadge">🔍 ПРОСМОТР</div>
         </div>
     </div>
     <div class="sessions-panel">
-        <div class="sessions-title">💿 ПРОШЛЫЕ СЕССИИ</div>
-        <div id="sessionsList"><div style="text-align:center;opacity:0.5;font-size:0.5rem;padding:6px;">Нет сохранённых сессий</div></div>
+        <div class="sessions-title">💿 СЕССИИ</div>
+        <div id="sessionsList"><div style="text-align:center;opacity:0.5;font-size:0.45rem;padding:4px;">Нет сохранённых сессий</div></div>
     </div>
-    <div class="segments-panel">
-        <div class="segments-header">
-            <span>📊 ОТРЕЗКИ</span>
-            <span style="font-size:0.45rem;"><span id="segCount">0</span>/9</span>
-        </div>
-        <div id="segmentsList"></div>
-    </div>
-    <footer>⚡ Премиум анализ · Целевые частоты · История сессий</footer>
+    <footer>⚡ Фоновый режим · Системный звук · Уведомления · Просмотр записи</footer>
 </div>
 
-<!-- Мини-режим оверлей -->
 <div class="mini-overlay" id="miniOverlay">
     <span class="mini-close" id="miniClose">✕</span>
     <div class="mini-freq" id="miniFreq">— Гц</div>
     <div id="miniNote">—</div>
+    <div id="miniColor" style="font-size:0.45rem;opacity:0.7;margin-top:2px;min-height:14px;"></div>
     <div id="miniLongest" style="font-size:0.45rem;opacity:0.8;margin-top:2px;"></div>
 </div>
 
 <script>
-    // ============ FREQUENCY DATABASE ============
+    // ========== ФУНКЦИЯ ОПРЕДЕЛЕНИЯ ЦВЕТА ПО ЧАСТОТЕ (Гибридная модель) ==========
+    function getColorHybrid(frequency, baseFreq = 440.0) {
+        if (frequency <= 0) return { r: 0, g: 0, b: 0, name: 'Тишина' };
+        
+        const A4 = baseFreq;
+        const halfSteps = 12 * Math.log2(frequency / A4);
+        const noteIndex = ((Math.round(halfSteps) % 12) + 12) % 12;
+        const octave = Math.floor(Math.round(halfSteps) / 12) + 4;
+        
+        const hueMap = {
+            0: 0.00, 1: 0.05, 2: 0.08, 3: 0.12, 4: 0.16,
+            5: 0.28, 6: 0.35, 7: 0.45, 8: 0.55, 9: 0.60,
+            10: 0.70, 11: 0.80
+        };
+        
+        const colorNames = {
+            0: 'Красный', 1: 'Алый', 2: 'Оранжевый', 3: 'Золотой',
+            4: 'Лимонный', 5: 'Зелёный', 6: 'Изумрудный', 7: 'Бирюзовый',
+            8: 'Синий', 9: 'Индиго', 10: 'Фиолетовый', 11: 'Пурпурный'
+        };
+        
+        const hue = hueMap[noteIndex];
+        let saturation, value;
+        
+        if (octave <= 2) { saturation = 0.7; value = 0.2 + (octave * 0.2); }
+        else if (octave >= 3 && octave <= 5) { saturation = 0.9; value = 0.7; }
+        else { saturation = 0.5; value = 0.85 + ((octave - 6) * 0.05); }
+        
+        saturation = Math.max(0.1, Math.min(1.0, saturation));
+        value = Math.max(0.1, Math.min(1.0, value));
+        
+        const h = hue * 6;
+        const c = value * saturation;
+        const x = c * (1 - Math.abs((h % 2) - 1));
+        const m = value - c;
+        
+        let r1, g1, b1;
+        if (h < 1) { r1 = c; g1 = x; b1 = 0; }
+        else if (h < 2) { r1 = x; g1 = c; b1 = 0; }
+        else if (h < 3) { r1 = 0; g1 = c; b1 = x; }
+        else if (h < 4) { r1 = 0; g1 = x; b1 = c; }
+        else if (h < 5) { r1 = x; g1 = 0; b1 = c; }
+        else { r1 = c; g1 = 0; b1 = x; }
+        
+        const r = Math.round((r1 + m) * 255);
+        const g = Math.round((g1 + m) * 255);
+        const b = Math.round((b1 + m) * 255);
+        
+        let brightnessDesc = '';
+        if (value <= 0.4) brightnessDesc = 'Тёмный';
+        else if (value <= 0.7) brightnessDesc = '';
+        else brightnessDesc = 'Светлый';
+        
+        const name = (brightnessDesc ? brightnessDesc + ' ' : '') + colorNames[noteIndex];
+        
+        return { r, g, b, name };
+    }
+
     const FREQ_DATABASE = {
         0.1: "Сверхглубокий дельта-ритм, способствует восстановлению на клеточном уровне и глубокому исцелению.",
-        0.2: "Ультраглубокий дельта-ритм, восстановление на молекулярном уровне.",
         0.5: "Глубокий сон, восстановление клеток, состояние покоя.",
         1: "Углубление сна, доступ к подсознанию, интуитивные прозрения.",
         1.618: "Золотое сечение — гармонизация процессов во времени.",
         2: "Состояние глубокого расслабления, восстановление энергии.",
         2.5: "Дельта-волны для глубокого восстановления и работы с подсознанием.",
-        2.718: "Частота числа 'e' (экспонента), гармонизация естественных процессов.",
         3: "Поддержка процессов регенерации, улучшение физического состояния.",
-        3.14: "Частота числа π (стабилизация циклов).",
         3.5: "Тета-волны для глубокого транса, доступа к коллективному бессознательному.",
         4: "Легкий сон, доступ к подсознанию, креативность.",
-        4.5: "Тета-волны для глубокого расслабления и творческой визуализации.",
-        4.669: "Частота числа Фибоначчи, гармонизация временных процессов.",
         5: "Глубокая медитация, интуитивные прозрения, улучшение памяти.",
-        5.5: "Тета-медитация, доступ к глубинным воспоминаниям.",
         6: "Повышение уровня креативности, доступ к внутреннему миру.",
-        6.5: "Стимуляция воображения, усиление доступа к подсознательным образам.",
         7: "Состояние потока, улучшение обучения и восприятия информации.",
-        7.5: "Шаманские состояния, осознанные сновидения.",
-        7.77: "Резонанс с циклами времени, усиление синхронизации.",
         7.83: "Шумановский резонанс — синхронизация с природными ритмами Земли.",
         8: "Расслабление, уменьшение стресса, улучшение настроения.",
-        8.3: "Тета-волны для усиления осознанных сновидений.",
-        8.5: "Альфа-тета-переход, усиливает интуицию и творческое мышление.",
-        8.888: "Резонанс с бесконечностью, усиление метафизических связей.",
         9: "Легкая медитация, доступ к внутреннему спокойствию.",
-        9.41: "Резонанс для синхронизации полушарий мозга, улучшение когнитивной координации.",
-        9.5: "Глубокая релаксация, гипнотическое состояние.",
         10: "Повышение концентрации, улучшение творческого мышления.",
-        10.5: "Усиление заземления корневой чакры, чувство стабильности.",
         11: "Поддержание бодрствования, легкая осознанность.",
-        11.11: "Частота синхронизации с порталами времени (например, 11:11).",
-        11.5: "Улучшает обучаемость и запоминание.",
         12: "Состояние расслабления, улучшение эмоционального состояния.",
-        12.21: "Резонанс с 12-мерной реальностью (теория многомерности).",
-        13: "Поддержка ясности мышления, улучшение восприятия.",
         14: "Активное мышление, внимание, решение проблем.",
-        14.1: "Вторая гармоника Шумана — ясность мышления.",
         15: "Увеличение бдительности, активизация умственной деятельности.",
-        15.5: "Поддержка корневой чакры, усиление чувства безопасности.",
-        16: "Повышение продуктивности, активное обучение.",
-        18: "Интенсивная работа, высокая степень осознанности.",
         20: "Поддержка активности, повышение энергии, улучшение кровообращения.",
-        20.5: "Балансировка корневой чакры.",
-        22: "Стимуляция умственной активности, улучшение когнитивных функций.",
-        22.5: "Частота Земного ядра — балансировка геомагнитных полей.",
-        24: "Высокая концентрация, решение сложных задач.",
-        25.5: "Сакральная чакра, усиление творческой энергии и сексуальности.",
-        26: "Интенсивное сосредоточение, активное взаимодействие с окружающей средой.",
         30: "Улучшение когнитивных функций, высокая концентрация, ясность мышления.",
-        30.5: "Балансировка сакральной чакры.",
-        32: "Гамма-волны для усиления интуитивного восприятия и ясности.",
-        33: "Когнитивная активация, связь с высшими психическими функциями.",
-        35: "Увеличение скорости обработки информации, улучшение памяти.",
-        35.5: "Сакральная чакра, усиление творческого потока.",
-        38: "Гамма-волны, связанные с пиковыми состояниями сознания и озарениями.",
-        40: "Высокий уровень сознания, борьба с болезнью Альцгеймера, глубокая медитация.",
-        40.5: "Балансировка чакры солнечного сплетения.",
-        44: "Ангельская защита (считается частотой архангелов).",
-        45.5: "Чакра солнечного сплетения, укрепление уверенности и личной силы.",
+        40: "Высокий уровень сознания, глубокая медитация.",
         50: "Углубление интуитивного восприятия, высокая продуктивность.",
-        50.5: "Балансировка сердечной чакры.",
-        55: "Резонанс с природными циклами, усиление связи с окружающей средой.",
-        55.5: "Сердечная чакра, усиление любви и эмпатии.",
-        60: "Поддержка сложных мыслительных процессов, улучшение аналитических способностей.",
-        60.5: "Балансировка горловой чакры.",
-        62: "Поддержка иммунной системы.",
-        65.5: "Горловая чакра, улучшение самовыражения и коммуникации.",
-        66: "Исцеление животных, связь с природой.",
-        68: "Очищение пространства от застойной энергии (аналог фэн-шуй).",
-        70.5: "Балансировка чакры третьего глаза.",
+        60: "Поддержка сложных мыслительных процессов.",
         72: "Регенерация клеток и тканей.",
-        75.5: "Чакра третьего глаза, усиление ясновидения.",
-        80: "Максимальная активизация мозга, высокая степень осознанности.",
-        80.5: "Балансировка коронной чакры.",
-        88: "Космическая синхронизация, выход за пределы линейного времени.",
-        95: "Антибактериальный эффект, очищение организма.",
-        99: "Частота универсального исцеления, балансировка энергии.",
         100: "Стимуляция, активизация, повышение энергии.",
-        100.5: "Вход в осознанные сновидения.",
-        108: "Резонанс Солнечной системы (частота священных чисел в индуизме).",
-        110: "Резонанс пирамид, гармонизация работы органов.",
+        108: "Резонанс Солнечной системы (священные числа).",
         111: "Древние храмовые частоты, связь с подсознанием.",
-        112: "Частота кристаллов (например, кварца), усиление их свойств.",
-        122: "Активация аметиста.",
-        123: "Код синхронизации — для настройки электронных устройств.",
-        126.22: "Резонанс Плутона.",
-        128: "Способствует внутреннему миру и гармонии.",
-        133: "Резонанс с аквамарином, успокоение и ясность ума.",
-        136: "Резонанс Земли (йогическая частота), способствует внутреннему спокойствию.",
-        136.07: "Ом частота, резонанс Земли, гармонизация в йоге и медитации.",
-        136.1: "Резонанс Земли (астрономический год).",
-        140.25: "Резонанс Венеры (сидерический период), гармония в любви и творчестве.",
-        142: "Резонанс пояса астероидов.",
-        142.72: "Резонанс пояса астероидов.",
         144: "Ангельская частота, духовное пробуждение.",
-        144.5: "Резонанс с турмалином, защита от негативных энергий.",
-        144.72: "Резонанс Луны (сидерический месяц).",
-        147: "Укрепляет связь с земной энергией, способствует заземлению и стабильности.",
-        147.5: "Усиление заземляющего эффекта 147 Гц, стабилизация энергетического поля.",
-        147.85: "Резонанс Венеры.",
-        150.5: "Глубокая гипнотическая индукция.",
-        155: "Резонанс с горным хрусталем.",
-        157.04: "Резонанс Хаумеа (карликовая планета), баланс женской энергии.",
-        166: "Стимуляция кровообращения, улучшение энергетического потока.",
-        172: "Помогает в активации ДНК и квантовом исцелении.",
-        172.06: "Резонанс Сириуса.",
-        174: "Снимает стресс и физическую боль, создавая ощущение безопасности.",
-        174.5: "Усиление эффекта базовой 174 Гц, глубже снимает мышечные зажимы.",
-        177: "Частота малахита (детокс и защита).",
-        183.58: "Резонанс Юпитера.",
-        187: "Ускоряет заживление ран, улучшает клеточную коммуникацию.",
-        187.5: "Частота галактического центра (Млечный Путь).",
-        188: "Частота шунгита, нейтрализация электромагнитного излучения.",
-        194.18: "Резонанс Луны, эмоциональный баланс.",
-        194.71: "Резонанс Луны (синодический месяц), эмоциональная гармония.",
-        195: "Снятие хронической усталости, восстановление энергии.",
-        199: "Частота селенита, очищение энергетического поля.",
-        200: "Обострение чувствительности, улучшение восприятия.",
-        200.5: "Шаманское путешествие (выход из тела).",
-        207: "Восстанавливает энергетический баланс, снимает усталость.",
-        210.42: "Резонанс Марса.",
-        211.44: "Резонанс Нептуна (дополнительная гармоника), духовное восприятие.",
-        221.23: "Резонанс Меркурия.",
-        223: "Резонанс с водной структурой, очищение воды.",
-        230: "Резонанс черных дыр (метафизическая частота трансформации).",
-        233: "Настройка лазурита (раскрытие 'третьего глаза').",
-        241.56: "Резонанс Сатурна.",
-        246: "Оптимизация работы компьютеров (экспериментальные исследования).",
-        248: "Частота для гармонизации клеточных мембран.",
-        250.22: "Резонанс Плеяд.",
-        250.76: "Резонанс Сириуса (второй порядок), связь с высшими знаниями.",
-        256: "Укрепляет связь с природой и окружающим миром.",
-        258: "Усиление интуитивного восприятия, работа с энергией чакр.",
-        263.4: "Резонанс Эриды (карликовая планета), трансформация и обновление.",
-        266: "Резонанс с обсидианом, усиление защиты и заземления.",
-        272.2: "Резонанс Солнца.",
-        281.6: "Резонанс Луны (лунный день), работа с эмоциями.",
-        285: "Способствует восстановлению и регенерации тканей и органов.",
-        285.5: "Ускоренная регенерация кожи и костной ткани.",
-        288: "Резонанс с цитрином, активация изобилия и радости.",
-        295.7: "Резонанс Нептуна.",
-        296.07: "Резонанс Урана.",
-        300: "Увеличение эмоционального отклика, поддержка активности.",
-        303: "Противовирусный эффект.",
-        304: "Стимуляция клеточного восстановления.",
-        304.5: "Стимуляция регенерации мягких тканей.",
-        311: "Резонанс с розовым кварцем (любовь и исцеление сердца).",
-        315: "Укрепление внутренней гармонии, баланс между разумом и эмоциями.",
-        315.5: "Углубление внутренней гармонии, снятие ментального напряжения.",
-        317: "Баланс нервной системы.",
-        317.5: "Стимуляция лимфатической системы, поддержка детоксикации.",
-        321: "Гармонизирует работу эндокринной системы.",
-        322: " Резонанс нейтронных звезд.",
-        334: "Гармонизация пространства (для дома/офиса).",
-        337: "Улучшает работу сердца и кровообращение.",
-        357: "Защита от электромагнитного излучения (ЭМП).",
-        369: "Тесла-частота, гармония Вселенной.",
-        369.5: "Оптимизация работы квантовых компьютеров (гипотетическая частота).",
-        377: "Частота лабрадорита, активация интуиции и мистического восприятия.",
-        383: "Очищает ауру, помогает избавиться от энергетических блоков.",
-        396: "Освобождает от страха и вины, помогает избавиться от негативных эмоций.",
-        396.5: "Глубокая очистка подсознания от подавленных страхов.",
-        400: "Улучшение ясности мышления, углубление осознанности.",
-        414: "Укрепление костной ткани.",
-        417: "Способствует изменениям и новому началу, помогает в решении проблем.",
-        417.5: "Усиливает эффект частоты 417 Гц, ускоряя трансформацию.",
-        422: "Частота гематита (заземление и сила).",
-        424: "Баланс между логикой и интуицией.",
-        432: "Гармоничная частота, способствует расслаблению и улучшению качества сна.",
-        432.1: "Гармонизация с универсальными вибрациями.",
-        432.2: "Уточнённая частота для синхронизации с природными вибрациями.",
-        432.3: "Уточнённая частота для гармонизации биополя.",
-        432.4: "Гармонизация с универсальными ритмами, усиление внутреннего баланса.",
-        432.5: "Гармонизация пространства для медитации и ритуалов.",
-        432.6: "Точная частота для синхронизации с природными вибрациями.",
-        432.7: "Уточненная гармоническая частота для синхронизации с природными ритмами.",
-        432.8: "Нейтрализация электромагнитных помех от устройств.",
-        440: "Стандартная настройка для музыкальных инструментов.",
-        444: "Защита от негативных влияний.",
-        445: "Активация 'спящих' нейронных связей.",
-        454: "Способствует глубокому расслаблению и снятию тревожности.",
-        465: "Детоксикация на клеточном уровне.",
-        465.5: "Усиление клеточной детоксикации.",
-        478: "Помогает при бессоннице, улучшает качество сна.",
-        480: "Нейтрализация негативного влияния 5G.",
-        500: "Разнообразные эффекты в зависимости от контекста.",
-        500.5: "Состояние 'самадхи' (предельная медитация).",
-        512: "Способствует ясности ума и концентрации.",
-        521: "Активирует творческий поток и вдохновение.",
-        528: "Частота любви и исцеления, способствует трансформации и восстановлению.",
-        528.1: "Нейтрализация электромагнитного смога от устройств.",
-        528.2: "Усиление регенеративных процессов на клеточном уровне.",
-        528.3: "Усиленная частота для регенерации ДНК и исцеления тканей.",
-        528.4: "Ускорение процессов регенерации ДНК.",
-        528.5: "Частота ДНК+ — усиленная версия 528 Гц для квантового исцеления.",
-        528.7: "Усиление позитивной энергии в помещении.",
-        543: "Открывает каналы восприятия, улучшает интуицию.",
-        555: "Активация позитивных изменений.",
-        556: "Частота 'звездных врат' — доступ к сакральным знаниям.",
-        576: "Поддержка регенерации тканей, усиление жизненной энергии.",
-        582: "Балансирует эмоциональное состояние, снимает стресс.",
-        606: "Регенерация нервных волокон.",
-        615: "Улучшает работу нервной системы, снижает напряжение.",
-        639: "Улучшает отношения и способствует гармонии в общении.",
-        639.5: "Гармонизация отношений в коллективах, разрешение конфликтов.",
-        650: "Снятие воспалительных процессов.",
-        660: "Глубокое очищение от негативных программ.",
-        667: "Контакт с внеземными цивилизациями (метафизический аспект).",
-        672: "Очищение энергетических каналов, снятие блоков.",
-        688: "Укрепляет иммунитет, повышает жизненный тонус.",
-        693: "Углубляет медитативное состояние, помогает в визуализации.",
-        707: "Баланс гормональной системы.",
-        712: "Помогает в духовном пробуждении и осознанности.",
-        727: "Регенерация клеток, поддержка иммунитета.",
-        741: "Очищает от токсинов и негативных эмоций, способствует решению проблем.",
-        741.4: "Очищение от ментальных токсинов, усиление ясности ума.",
-        741.5: "Детокс на уровне ДНК, очищение от радиации.",
-        741.7: "Нейтрализация геопатогенных зон.",
-        741.8: "Защита от негативного воздействия высокочастотных технологий.",
-        764: "Улучшает концентрацию и ясность ума.",
-        777: "Ангельская поддержка и руководство.",
-        778: "Частота 'Божественного порядка', структурирование хаоса.",
-        784: "Гармонизация биополя.",
-        787: "Квантовый скачок сознания.",
-        787.5: "Антипаразитарный эффект, очищение организма.",
-        787.7: "Антигрибковый эффект, поддержка очищения организма.",
-        808: "Балансировка работы искусственного интеллекта (в эзотерических практиках).",
-        815: "Способствует глубокой медитации и трансовым состояниям.",
-        825: "Очищение ментального пространства, устранение негативных мыслей.",
-        835: "Поддержка иммунной системы.",
-        852: "Развивает интуицию и осознанность, помогает в духовном росте.",
-        852.4: "Активация интуитивных каналов, усиление духовного восприятия.",
-        852.5: "Активация шишковидной железы, пробуждение 'третьего глаза'.",
-        876: "Открывает сердце, усиливает чувство любви и сострадания.",
-        880: "Антибактериальный эффект, детоксикация.",
-        888: "Частота изобилия и процветания, усиление позитивных намерений.",
-        889: "Исцеление родовых программ.",
-        900: "Активация 'спящей' ДНК, пробуждение потенциала.",
-        909: "Омоложение на клеточном уровне.",
-        912: "Помогает в освобождении от старых травм и обид.",
-        936: "Углубление связи с высшим сознанием, активация духовного потенциала.",
-        945: "Активирует высшие уровни сознания.",
-        963: "Способствует духовному пробуждению и соединению с высшими уровнями сознания.",
-        963.1: "Синхронизация с искусственным интеллектом для гармоничной работы.",
-        963.5: "Связь с кристаллическими решетками Земли (например, места силы).",
-        987: "Связь с космическим сознанием, активация высших чакр.",
-        999: "Завершение циклов, переход на новый уровень.",
+        174: "Снимает стресс и физическую боль.",
+        285: "Восстановление и регенерация тканей и органов.",
+        396: "Освобождает от страха и вины.",
+        417: "Способствует изменениям и новому началу.",
+        432: "Гармоничная частота, расслабление, улучшение сна.",
+        440: "Стандартная настройка музыкальных инструментов.",
+        528: "Частота любви и исцеления, трансформация ДНК.",
+        639: "Улучшает отношения, гармония в общении.",
+        741: "Очищает от токсинов и негативных эмоций.",
+        852: "Развивает интуицию и осознанность.",
+        963: "Духовное пробуждение, связь с высшими уровнями сознания.",
         1000: "Стимуляция, повышение энергии.",
-        1008: "Поддержка регенерации кожи и тканей.",
-        1010: "Пробуждение высшего интеллекта.",
-        1011: "Синхронизация с универсальным сознанием, активация внутреннего знания.",
-        1012: "Стимуляция энергетического обмена в клетках.",
-        1024: "Улучшает память и когнитивные функции.",
-        1074: "Очищение от негативных энергий.",
         1111: "Пробуждение высшего 'Я', синхронизация с Вселенной.",
-        1112: "Активация квантового сознания, усиление связи с многмерностью.",
-        1152: "Стимуляция ментальной ясности, усиление аналитического мышления.",
-        1180: "Ясность мышления и концентрация.",
-        1212: "Активация высших вибраций, синхронизация с многомерным сознанием.",
-        1222: "Частота перехода, гармонизация жизненных циклов.",
-        1234: "Гармонизация всех энергетических центров.",
-        1260: "Связь с интуицией и внутренним миром.",
-        1333: "Усиление связи с духовными наставниками.",
-        1360: "Глубокое расслабление и медитация.",
-        1440: "Активизация жизненных процессов.",
-        1500: "Клеточная энергия.",
-        1530: "Укрепление иммунной системы.",
-        1620: "Повышение уверенности в себе.",
-        1710: "Освобождение от стресса.",
-        1728: "Гармонизация ауры, усиление энергетической защиты.",
-        1800: "Креативность и вдохновение.",
-        1890: "Внутренний покой и гармония.",
-        1980: "Эмоциональная стабильность.",
-        2000: "Активация жизненных процессов.",
-        2020: "Частота 'новой эры', пробуждение коллективного сознания.",
-        2048: "Глубокое расслабление и медитация.",
-        2160: "Повышение осознанности.",
-        2222: "Ангельская поддержка, усиление интуиции.",
-        2224: "Гармонизация энергетических центров, усиление внутренней силы.",
-        2250: "Улучшение отношений.",
-        2304: "Поддержка глубокого медитативного состояния.",
-        2340: "Духовный рост и самоисцеление.",
-        2430: "Внутреннее равновесие.",
-        2520: "Активация жизненной энергии.",
-        2610: "Улучшение концентрации.",
-        2700: "Связь с интуицией.",
-        2790: "Глубокая медитация.",
-        2880: "Творческое вдохновение.",
-        2970: "Освобождение от стресса.",
-        3000: "Очищение энергии.",
-        3060: "Гармония в отношениях.",
-        3150: "Повышение осознанности.",
-        3240: "Эмоциональное равновесие.",
-        3330: "Связь с природой.",
-        3333: "Связь с Высшими Силами, духовными наставниками.",
-        3336: "Связь с высшими измерениями, духовное руководство.",
-        3420: "Ясность ума.",
-        3456: "Активация высших уровней сознания, усиление духовной связи.",
-        3510: "Активизация энергии.",
-        3600: "Внутренняя гармония.",
-        3960: "Духовная осознанность.",
-        4096: "Духовное развитие.",
-        4320: "Гармония и покой.",
-        4321: "Космическая гармония.",
-        4410: "Творческое вдохновение.",
-        4444: "Защита от негативных энергий, усиление ауры.",
-        4448: "Усиление защитного энергетического поля.",
-        4500: "Физическое и эмоциональное здоровье.",
-        4590: "Улучшение коммуникации.",
-        4680: "Эмоциональная стабильность.",
-        4770: "Жизненная сила.",
-        4860: "Глубокая медитация.",
-        4950: "Освобождение от стресса.",
-        5040: "Внутреннее равновесие.",
-        5130: "Повышение осознанности.",
-        5184: "Синхронизация с космическими ритмами, усиление интуиции.",
-        5220: "Ясность мышления.",
-        5280: "Любовь и исцеление, регенерация клеток.",
-        5310: "Связь с интуицией.",
-        5400: "Освобождение от стресса.",
-        5490: "Гармония в отношениях.",
-        5580: "Творческое вдохновение.",
-        5670: "Эмоциональная стабильность.",
-        5760: "Связь с природой.",
-        5850: "Ясность ума.",
-        5940: "Активизация энергии.",
-        6030: "Внутренняя гармония.",
-        6120: "Духовная осознанность.",
-        7200: "Духовный рост.",
-        7776: "Глубокое духовное пробуждение, связь с божественным.",
-        7777: "Божественное исцеление, мистическое откровение.",
-        8192: "Творческое вдохновение.",
-        8888: "Активация изобилия и процветания.",
-        9999: "Полное духовное пробуждение.",
-        10000: "Активация ДНК, высокая осознанность.",
-        10800: "Углубление медитативного состояния, связь с высшими измерениями.",
-        12000: "Очищение ауры, активация высших вибраций.",
-        12500: "Клеточная энергия.",
-        15000: "Повышение вибраций на физическом уровне.",
-        18000: "Ускорение квантовых процессов в сознании.",
-        20000: "Квантовый скачок, очищение энергетического поля.",
-        25000: "Гармонизация биополя, активация спящих способностей.",
-        30000: "Космическая гармония, вход в состояние сверхсознания.",
-        40000: "Духовное пробуждение.",
-        43200: "Глубокое расслабление и медитация.",
-        50000: "Гармонизация вибраций.",
-        52800: "Связь с любовью и внутренним миром.",
-        60000: "Связь с метафизическими энергиями.",
-        63900: "Гармония в отношениях.",
-        70000: "Усиление энергетического поля.",
-        74100: "Очищение от негативных эмоций.",
-        80000: "Резонанс с универсальными вибрациями.",
-        85200: "Развитие интуиции.",
-        90000: "Углубление духовного развития.",
-        96300: "Духовное пробуждение.",
-        100000: "Максимальная гармония с Вселенной.",
-        108000: "Космическая гармония, усиление связи с универсальной энергией.",
-        144000: "Активация высшего потенциала, пробуждение квантового сознания."
+        5280: "Любовь и исцеление, регенерация клеток."
     };
 
-    const SEGMENTS = [
-        { name: "10с", sec: 10 }, { name: "20с", sec: 20 }, { name: "30с", sec: 30 },
-        { name: "40с", sec: 40 }, { name: "1м", sec: 60 }, { name: "2м", sec: 120 },
-        { name: "3м", sec: 180 }, { name: "5м", sec: 300 }, { name: "10м", sec: 600 }
-    ];
-    
     let TARGET_FREQUENCIES = Object.keys(FREQ_DATABASE).map(Number).sort((a,b)=>a-b);
     const TARGET_TOLERANCE = 2;
-    const TOP_COUNT = 3;
-    const DISPLAY_TIMEOUT = 4000;
-    const FADE_DURATION = 1500;
-    
+    let topFreqCount = 3;
+    let historyMinutes = 20;
+    let minDuration = 0.1;
+    let audioSource = 'mic';
+    let isBackgroundMode = false;
     let isRunning = false, startTime = 0, timerInterval = null, rafId = null;
     let mediaStream = null, audioCtx = null, source = null, analyser = null;
-    let segmentAcc = SEGMENTS.map(() => ({ sumFreqWeight: 0, sumWeight: 0, finalized: false, result: 0, durHist: {}, engHist: {} }));
     let timeSeriesData = [], globalHistogram = {}, last10sHistory = [];
-    let allDetectedFreqs = new Map();
     let freqDurations = {};
     let logBinsCount = 48, logBinEdges = [], noiseFloorDB = -60, lastProcessedTime = 0;
     let timelinePosition = 0, isDraggingTimeline = false;
     let currentGain = 0;
     let savedSessions = JSON.parse(localStorage.getItem('freqSessions') || '[]');
     let isMiniMode = false;
-    let showEnergy = false; // По умолчанию громкость скрыта
-    
+    let showEnergy = false;
+    let isPipMode = false;
+    let notificationInterval = null;
+
     const els = {
-        startBtn: document.getElementById('startBtn'), stopBtn: document.getElementById('stopBtn'), saveBtn: document.getElementById('saveBtn'),
-        timer: document.getElementById('timer'), currentFreq: document.getElementById('currentFreq'), currentNote: document.getElementById('currentNote'),
-        freqDescription: document.getElementById('freqDescription'),
-        segCount: document.getElementById('segCount'), noiseFloor: document.getElementById('noiseFloor'),
-        segmentsList: document.getElementById('segmentsList'), timelineCanvas: document.getElementById('timelineCanvas'),
-        timelineCursor: document.getElementById('timelineCursor'), timelineVisual: document.getElementById('timelineVisual'),
-        timelineCurrentTime: document.getElementById('timelineCurrentTime'), timelineTotalTime: document.getElementById('timelineTotalTime'),
-        timelineCursorTime: document.getElementById('timelineCursorTime'), detectedFreqs: document.getElementById('detectedFreqs'), sessionsList: document.getElementById('sessionsList'),
+        startBtn: document.getElementById('startBtn'), stopBtn: document.getElementById('stopBtn'), resetBtn: document.getElementById('resetBtn'),
+        saveBtn: document.getElementById('saveBtn'), timer: document.getElementById('timer'), currentFreq: document.getElementById('currentFreq'),
+        currentNote: document.getElementById('currentNote'), currentColorInfo: document.getElementById('currentColorInfo'),
+        noiseFloor: document.getElementById('noiseFloor'), bgStatus: document.getElementById('bgStatus'),
+        timelineCanvas: document.getElementById('timelineCanvas'), timelineCursor: document.getElementById('timelineCursor'),
+        timelineVisual: document.getElementById('timelineVisual'), timelineCurrentTime: document.getElementById('timelineCurrentTime'),
+        timelineTotalTime: document.getElementById('timelineTotalTime'), timelineCursorTime: document.getElementById('timelineCursorTime'),
+        reviewBadge: document.getElementById('reviewBadge'),
+        detectedFreqs: document.getElementById('detectedFreqs'), sessionsList: document.getElementById('sessionsList'),
         gainFill: document.getElementById('gainFill'), gainLabel: document.getElementById('gainLabel'),
-        freqTooltip: document.getElementById('freqTooltip'),
-        miniModeBtn: document.getElementById('miniModeBtn'),
-        energyToggleBtn: document.getElementById('energyToggleBtn'),
-        miniOverlay: document.getElementById('miniOverlay'),
-        miniFreq: document.getElementById('miniFreq'),
-        miniNote: document.getElementById('miniNote'),
-        miniLongest: document.getElementById('miniLongest'),
-        miniClose: document.getElementById('miniClose'),
-        mainContainer: document.getElementById('mainContainer'),
-        liveStatsGrid: document.getElementById('liveStatsGrid'),
-        stats10sGrid: document.getElementById('stats10sGrid'),
-        timelineStatsTop: document.getElementById('timelineStatsTop'),
-        liveDurationFreq: document.getElementById('liveDurationFreq'), liveDurationNote: document.getElementById('liveDurationNote'), liveDurationTop: document.getElementById('liveDurationTop'),
-        liveEnergyFreq: document.getElementById('liveEnergyFreq'), liveEnergyNote: document.getElementById('liveEnergyNote'), liveEnergyTop: document.getElementById('liveEnergyTop'),
-        last10sDurationFreq: document.getElementById('last10sDurationFreq'), last10sDurationNote: document.getElementById('last10sDurationNote'), last10sDurationTop: document.getElementById('last10sDurationTop'),
-        last10sEnergyFreq: document.getElementById('last10sEnergyFreq'), last10sEnergyNote: document.getElementById('last10sEnergyNote'), last10sEnergyTop: document.getElementById('last10sEnergyTop'),
-        timelineDurationFreq: document.getElementById('timelineDurationFreq'), timelineDurationNote: document.getElementById('timelineDurationNote'), timelineDurationTop: document.getElementById('timelineDurationTop'),
-        timelineEnergyFreq: document.getElementById('timelineEnergyFreq'), timelineEnergyNote: document.getElementById('timelineEnergyNote'), timelineEnergyTop: document.getElementById('timelineEnergyTop')
+        freqTooltip: document.getElementById('freqTooltip'), miniModeBtn: document.getElementById('miniModeBtn'),
+        energyToggleBtn: document.getElementById('energyToggleBtn'), settingsBtn: document.getElementById('settingsBtn'),
+        settingsPanel: document.getElementById('settingsPanel'), topCountSlider: document.getElementById('topCountSlider'),
+        topCountValue: document.getElementById('topCountValue'), historySlider: document.getElementById('historySlider'),
+        historyValue: document.getElementById('historyValue'), minDurationSlider: document.getElementById('minDurationSlider'),
+        minDurationValue: document.getElementById('minDurationValue'), pipBtn: document.getElementById('pipBtn'),
+        sourceBtn: document.getElementById('sourceBtn'), sourceIndicator: document.getElementById('sourceIndicator'),
+        bgModeBtn: document.getElementById('bgModeBtn'), miniOverlay: document.getElementById('miniOverlay'),
+        miniFreq: document.getElementById('miniFreq'), miniNote: document.getElementById('miniNote'),
+        miniColor: document.getElementById('miniColor'), miniLongest: document.getElementById('miniLongest'),
+        miniClose: document.getElementById('miniClose'), mainContainer: document.getElementById('mainContainer'),
+        liveStatsGrid: document.getElementById('liveStatsGrid'), timelineStatsTop: document.getElementById('timelineStatsTop'),
+        liveDurationFreq: document.getElementById('liveDurationFreq'), liveDurationNote: document.getElementById('liveDurationNote'),
+        liveDurationColor: document.getElementById('liveDurationColor'), liveDurationTime: document.getElementById('liveDurationTime'),
+        liveDurationTop: document.getElementById('liveDurationTop'), liveEnergyFreq: document.getElementById('liveEnergyFreq'),
+        liveEnergyNote: document.getElementById('liveEnergyNote'), liveEnergyColor: document.getElementById('liveEnergyColor'),
+        liveEnergyTop: document.getElementById('liveEnergyTop'), last10sDurationFreq: document.getElementById('last10sDurationFreq'),
+        last10sDurationNote: document.getElementById('last10sDurationNote'), last10sDurationColor: document.getElementById('last10sDurationColor'),
+        last10sDurationTop: document.getElementById('last10sDurationTop'), timelineDurationFreq: document.getElementById('timelineDurationFreq'),
+        timelineDurationNote: document.getElementById('timelineDurationNote'), timelineDurationColor: document.getElementById('timelineDurationColor'),
+        timelineDurationTop: document.getElementById('timelineDurationTop'), timelineEnergyFreq: document.getElementById('timelineEnergyFreq'),
+        timelineEnergyNote: document.getElementById('timelineEnergyNote'), timelineEnergyColor: document.getElementById('timelineEnergyColor'),
+        timelineEnergyTop: document.getElementById('timelineEnergyTop')
     };
-    
+
+    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; });
+    if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); }); }
+
+    async function requestNotificationPermission() { if ('Notification' in window && Notification.permission === 'default') { await Notification.requestPermission(); } }
+    requestNotificationPermission();
+
+    function sendNotification(title, body) {
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification(title, { body: body, icon: 'icon-192.png', tag: 'freq-analyzer', silent: true });
+        }
+    }
+
+    function updateBackgroundNotification() {
+        if (!isBackgroundMode || !isRunning) return;
+        const top = getTopFreqsByDuration(1);
+        if (top.length > 0) {
+            const f = top[0];
+            const desc = FREQ_DATABASE[f.freq] || '';
+            sendNotification(`🎵 ${f.freq} Гц (${formatDuration(f.duration)})`, desc.substring(0, 50));
+        }
+    }
+
     function updateEnergyVisibility() {
-        const grids = [els.liveStatsGrid, els.stats10sGrid, els.timelineStatsTop];
+        const grids = [els.liveStatsGrid, els.timelineStatsTop];
         const energyStats = document.querySelectorAll('.energy-stat');
-        
         if (showEnergy) {
             grids.forEach(g => g.classList.add('with-energy'));
             energyStats.forEach(s => s.classList.remove('energy-hidden'));
             els.energyToggleBtn.classList.add('active');
-            els.energyToggleBtn.textContent = '🔊';
         } else {
             grids.forEach(g => g.classList.remove('with-energy'));
             energyStats.forEach(s => s.classList.add('energy-hidden'));
             els.energyToggleBtn.classList.remove('active');
-            els.energyToggleBtn.textContent = '🔇';
         }
     }
     updateEnergyVisibility();
-    
+
+    function updateSourceIndicator() {
+        els.sourceIndicator.textContent = audioSource === 'mic' ? 'Микрофон' : 'Система';
+        els.sourceBtn.innerHTML = audioSource === 'mic' ? '🎤<span class="source-indicator">Микрофон</span>' : '🔊<span class="source-indicator">Система</span>';
+    }
+
+    function formatDuration(seconds) {
+        if (seconds < 60) return seconds.toFixed(1) + 'с';
+        const m = Math.floor(seconds / 60), s = Math.floor(seconds % 60);
+        return m + 'м ' + s + 'с';
+    }
+
     function initLogBins(){const minFreq=30,maxFreq=5000;logBinEdges=[];for(let i=0;i<=logBinsCount;i++)logBinEdges.push(minFreq*Math.pow(maxFreq/minFreq,i/logBinsCount));}initLogBins();
     function freqToNote(f){if(f<25)return'—';const n=["До","До#","Ре","Ре#","Ми","Фа","Фа#","Соль","Соль#","Ля","Ля#","Си"];let s=12*Math.log2(f/440)+69,o=Math.floor(Math.round(s)/12)-1,i=((Math.round(s)%12)+12)%12;return n[i]+o;}
     function roundFreq(f){if(f<200)return Math.round(f/5)*5;if(f<1000)return Math.round(f/10)*10;return Math.round(f/20)*20;}
-    
+
     function findClosestFreq(freq) {
         let closest = null, minDiff = Infinity;
         for (const tf of TARGET_FREQUENCIES) {
@@ -1139,184 +916,442 @@
         }
         return closest;
     }
-    
+
     function getTopFreqsByDuration(limit = 3) {
-        const sorted = Object.entries(freqDurations)
-            .filter(([freq, dur]) => dur > 0)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, limit);
+        const sorted = Object.entries(freqDurations).filter(([freq, dur]) => dur >= minDuration).sort((a, b) => b[1] - a[1]).slice(0, limit);
         return sorted.map(([freq, dur]) => ({ freq: parseFloat(freq), duration: dur }));
     }
-    
-    function isTarget(f){return findClosestFreq(f);}
-    function getTopTargetsFromHistogram(h){const targets={};for(const[freq,data]of Object.entries(h)){const f=parseFloat(freq);const tf=findClosestFreq(f);if(tf!==null){if(!targets[tf])targets[tf]={duration:0,energy:0};targets[tf].duration+=data.totalDuration||0;targets[tf].energy+=data.totalEnergy||0;}}return targets;}
-    function topTargetsToString(targets,sortBy='duration'){const arr=Object.entries(targets).sort((a,b)=>b[1][sortBy]-a[1][sortBy]).slice(0,TOP_COUNT);if(arr.length===0)return'';return'🏆 '+arr.map(([f])=>f+' Гц').join(' · ');}
-    
+
+    function topFreqsToDisplayString(topFreqs) {
+        if (topFreqs.length === 0) return '';
+        return '🏆 ' + topFreqs.map(t => t.freq + ' Гц').join(' · ');
+    }
+
     function showTooltip(e,freq){const desc=FREQ_DATABASE[freq]||'Нет описания';els.freqTooltip.textContent=freq+' Гц: '+desc;els.freqTooltip.style.display='block';els.freqTooltip.style.left=Math.min(e.clientX+10,window.innerWidth-260)+'px';els.freqTooltip.style.top=(e.clientY-50)+'px';}
     function hideTooltip(){els.freqTooltip.style.display='none';}
-    
+
     function updateMiniOverlay() {
-        if (!isMiniMode) return;
-        const currentFreq = els.currentFreq.innerText;
-        const currentNote = els.currentNote.innerText;
-        const topFreqs = getTopFreqsByDuration(1);
-        els.miniFreq.innerText = currentFreq;
-        els.miniNote.innerText = currentNote;
-        if (topFreqs.length > 0) {
-            els.miniLongest.innerText = 'Дольше: '+topFreqs[0].freq.toFixed(1)+' Гц ('+topFreqs[0].duration.toFixed(1)+'с)';
+        if (!isMiniMode && !isPipMode) return;
+        const f = els.currentFreq.innerText;
+        els.miniFreq.innerText = f;
+        els.miniNote.innerText = els.currentNote.innerText;
+        
+        const freq = parseFloat(f);
+        if (freq > 0) {
+            const c = getColorHybrid(freq);
+            els.miniColor.innerHTML = `<span class="color-indicator" style="background:rgb(${c.r},${c.g},${c.b})"></span> ${c.name}`;
         } else {
-            els.miniLongest.innerText = '';
+            els.miniColor.innerHTML = '<span style="opacity:0.3;font-style:italic;">🎨 Ожидание...</span>';
         }
+        
+        const top = getTopFreqsByDuration(1);
+        els.miniLongest.innerText = top.length > 0 ? 'Дольше: '+top[0].freq.toFixed(1)+' Гц ('+formatDuration(top[0].duration)+')' : '';
     }
-    
-    function updateDetectedFreqsDisplay(){
-        const now = Date.now();
-        const topFreqs = getTopFreqsByDuration(3);
-        const topFreqSet = new Set(topFreqs.map(t => t.freq));
-        
-        for (const [freq] of allDetectedFreqs) {
-            if (!topFreqSet.has(freq)) allDetectedFreqs.delete(freq);
-        }
-        
-        for (const {freq, duration} of topFreqs) {
-            allDetectedFreqs.set(freq, { addedTime: now, state: 'active', totalDuration: duration });
-        }
-        
-        if (allDetectedFreqs.size === 0) {
-            if (els.detectedFreqs.innerHTML !== '') els.detectedFreqs.innerHTML = '';
-            return;
-        }
-        
+
+    function updateTopFreqsDisplay() {
+        const topFreqs = getTopFreqsByDuration(topFreqCount);
+        if (topFreqs.length === 0) { els.detectedFreqs.innerHTML = ''; return; }
         els.detectedFreqs.innerHTML = topFreqs.map(({freq, duration}) => {
-            const cls = 'detected-freq-tag longest';
-            const durStr = `<span class="freq-duration">${duration.toFixed(1)}с</span>`;
             const desc = FREQ_DATABASE[freq] || '';
-            const shortDesc = desc.length > 40 ? desc.substring(0, 40) + '...' : desc;
-            const descStr = shortDesc ? `<span class="freq-desc-short">${shortDesc}</span>` : '';
-            return `<span class="${cls}" data-freq="${freq}">${freq} Гц${durStr}${descStr}</span>`;
+            const shortDesc = desc.length > 30 ? desc.substring(0, 30) + '...' : desc;
+            const c = getColorHybrid(freq);
+            return `<span class="detected-freq-tag longest" data-freq="${freq}" style="background:rgba(${c.r},${c.g},${c.b},0.3); border-color:rgb(${c.r},${c.g},${c.b})">
+                ${freq} Гц
+                <span class="freq-duration">${formatDuration(duration)}</span>
+                <span class="freq-color-name">🎨 ${c.name}</span>
+                ${shortDesc ? `<span class="freq-desc-short">${shortDesc}</span>` : ''}
+            </span>`;
         }).join('');
-        
         els.detectedFreqs.querySelectorAll('.detected-freq-tag').forEach(tag => {
-            tag.addEventListener('click', e => { showTooltip(e, parseFloat(tag.dataset.freq)); });
-            tag.addEventListener('touchend', e => { showTooltip(e, parseFloat(tag.dataset.freq)); setTimeout(hideTooltip, 3000); });
+            tag.addEventListener('click', e => showTooltip(e, parseFloat(tag.dataset.freq)));
         });
     }
-    
-    function flashTarget(tf, dt) {
+
+    function trimTimeSeries() {
+        const maxTime = historyMinutes * 60;
+        if (timeSeriesData.length > 0) {
+            const latestTime = timeSeriesData[timeSeriesData.length - 1].time;
+            const cutoff = latestTime - maxTime;
+            if (cutoff > 0) timeSeriesData = timeSeriesData.filter(p => p.time >= cutoff);
+        }
+    }
+
+    function addFreqDuration(tf, dt) {
         if (!freqDurations[tf]) freqDurations[tf] = 0;
         freqDurations[tf] += dt;
-        updateDetectedFreqsDisplay();
-        updateMiniOverlay();
-        els.currentFreq.classList.add('detected');
-        setTimeout(() => els.currentFreq.classList.remove('detected'), 1000);
-        const desc = FREQ_DATABASE[tf] || '';
-        if (desc) els.freqDescription.innerText = desc;
     }
-    
-    function renderSessions(){if(savedSessions.length===0){els.sessionsList.innerHTML='<div style="text-align:center;opacity:0.5;font-size:0.5rem;padding:6px;">Нет сохранённых сессий</div>';return;}els.sessionsList.innerHTML=savedSessions.slice().reverse().map((s,i)=>{const d=new Date(s.date),ds=d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'2-digit'}),ts=d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});const dur=s.duration,m=Math.floor(dur/60),sec=Math.floor(dur%60),df=s.dominantFreq>0?s.dominantFreq.toFixed(1)+' Гц':'—';return`<div class="session-row" onclick="loadSession(${savedSessions.length-1-i})"><span class="session-date">${ds} ${ts}</span><span class="session-duration">${m}:${sec.toString().padStart(2,'0')}</span><span class="session-freq">${df}</span></div>`;}).join('');}
-    function saveSession(){const tt=timeSeriesData.length>0?timeSeriesData[timeSeriesData.length-1].time:0;if(tt===0)return;const dom=getDominantsFromHistogram(globalHistogram);savedSessions.push({date:Date.now(),duration:tt,dominantFreq:dom.duration.freq,energyFreq:dom.energy.freq,allDetected:Array.from(allDetectedFreqs.keys())});localStorage.setItem('freqSessions',JSON.stringify(savedSessions));renderSessions();}
-    function loadSession(i){if(i<0||i>=savedSessions.length)return;const s=savedSessions[i];let msg=`Сессия от ${new Date(s.date).toLocaleString('ru-RU')}\nДлительность: ${Math.floor(s.duration)}с\nДоминанта: ${s.dominantFreq>0?s.dominantFreq.toFixed(1)+' Гц':'—'}`;if(s.allDetected&&s.allDetected.length>0)msg+='\nНайдены частоты: '+s.allDetected.join(', ')+' Гц';alert(msg);}
+
+    function renderSessions(){if(savedSessions.length===0){els.sessionsList.innerHTML='<div style="text-align:center;opacity:0.5;font-size:0.45rem;padding:4px;">Нет сохранённых сессий</div>';return;}els.sessionsList.innerHTML=savedSessions.slice(-10).reverse().map((s,i)=>{const d=new Date(s.date),ds=d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'2-digit'}),ts=d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});const dur=s.duration,m=Math.floor(dur/60),sec=Math.floor(dur%60),df=s.dominantFreq>0?s.dominantFreq.toFixed(1)+' Гц':'—';return`<div class="session-row" onclick="loadSession(${savedSessions.length-1-i})"><span class="session-date">${ds} ${ts}</span><span class="session-duration">${m}:${sec.toString().padStart(2,'0')}</span><span class="session-freq">${df}</span></div>`;}).join('');}
+    function saveSession(){const tt=timeSeriesData.length>0?timeSeriesData[timeSeriesData.length-1].time:0;if(tt===0)return;const dom=getDominantsFromHistogram(globalHistogram);savedSessions.push({date:Date.now(),duration:tt,dominantFreq:dom.duration.freq,energyFreq:dom.energy.freq,allDetected:Object.keys(freqDurations)});if(savedSessions.length>100)savedSessions=savedSessions.slice(-100);localStorage.setItem('freqSessions',JSON.stringify(savedSessions));renderSessions();}
+    function loadSession(i){if(i<0||i>=savedSessions.length)return;const s=savedSessions[i];let msg = `Сессия от ${new Date(s.date).toLocaleString('ru-RU')}\nДлительность: ${Math.floor(s.duration)}с\nДоминанта: ${s.dominantFreq>0?s.dominantFreq.toFixed(1)+' Гц':'—'}`;if(s.allDetected&&s.allDetected.length>0)msg+='\nНайдены частоты: '+s.allDetected.join(', ')+' Гц';alert(msg);}
+
     function getPeak(analyser,ctx,th=1.3){const b=new Uint8Array(analyser.frequencyBinCount);analyser.getByteFrequencyData(b);const sr=ctx.sampleRate,fs=(sr/2)/b.length;let sum=0;for(let i=5;i<b.length-5;i++)sum+=b[i];let an=sum/(b.length-10);noiseFloorDB=(20*Math.log10((an+1)/255)).toFixed(0);els.noiseFloor.innerText=noiseFloorDB;let maxAmp=0;for(let i=0;i<b.length;i++)if(b[i]>maxAmp)maxAmp=b[i];currentGain=Math.round((maxAmp/255)*100);els.gainFill.style.width=currentGain+'%';els.gainLabel.textContent=currentGain+'%';let mp=Math.max(15,an*th),mi=0,mv=0;for(let i=10;i<b.length-10;i++){if(b[i]>mv&&b[i]>mp){mv=b[i];mi=i;}}if(mv<mp)return{freq:0,amp:0};const l=b[mi-1],r=b[mi+1],d=l-2*mv+r;let delta=d!==0?0.5*(l-r)/d:0;let pi=Math.max(0,Math.min(b.length-1,mi+delta));let freq=pi*fs;if(freq<25||freq>5000)return{freq:0,amp:0};return{freq:Math.round(freq*10)/10,amp:mv/255};}
-    function updateTimelineCanvas(){const c=els.timelineCanvas,ctx=c.getContext('2d'),rect=c.parentElement.getBoundingClientRect();c.width=rect.width;c.height=rect.height;ctx.fillStyle='#000';ctx.fillRect(0,0,c.width,c.height);if(timeSeriesData.length<2)return;const tt=timeSeriesData[timeSeriesData.length-1].time;if(tt===0)return;ctx.strokeStyle='rgba(0,255,0,0.1)';ctx.lineWidth=0.5;for(let t=1;t<tt;t++){const x=(t/tt)*c.width;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,c.height);ctx.stroke();if(t%5===0||tt<30){ctx.fillStyle='rgba(0,255,0,0.4)';ctx.font='7px monospace';ctx.fillText(t+'с',x+2,9);}}const mf=5000;for(let i=1;i<timeSeriesData.length;i++){const x1=(timeSeriesData[i-1].time/tt)*c.width,x2=(timeSeriesData[i].time/tt)*c.width;const y1=c.height-(timeSeriesData[i-1].freq/mf)*c.height,y2=c.height-(timeSeriesData[i].freq/mf)*c.height;const alpha=Math.min(0.8,timeSeriesData[i].weight/10);ctx.strokeStyle=`rgba(0,255,0,${alpha})`;ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();}const cx=(timelinePosition/tt)*c.width;els.timelineCursor.style.left=cx+'px';els.timelineCursorTime.textContent=timelinePosition.toFixed(1)+'с';els.timelineCursorTime.style.left=cx+'px';els.timelineCurrentTime.textContent=timelinePosition.toFixed(1)+'с';els.timelineTotalTime.textContent=tt.toFixed(1)+'с';}
+
+    function isTargetFreq(freq) {
+        return findClosestFreq(freq) !== null;
+    }
+
+    function updateTimelineCanvas(){
+        const c=els.timelineCanvas,ctx=c.getContext('2d'),rect=c.parentElement.getBoundingClientRect();
+        c.width=rect.width;c.height=rect.height;
+        ctx.fillStyle='#000';ctx.fillRect(0,0,c.width,c.height);
+        if(timeSeriesData.length<2)return;
+        const tt=timeSeriesData[timeSeriesData.length-1].time;
+        if(tt===0)return;
+        
+        const step=tt>120?10:tt>60?5:1;
+        for(let t=0;t<=tt;t+=step){
+            const x=(t/tt)*c.width;
+            ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,c.height);ctx.stroke();
+            ctx.strokeStyle='rgba(0,255,0,0.1)';ctx.lineWidth=0.5;
+            if(t%10===0||tt<60){ctx.fillStyle='rgba(0,255,0,0.5)';ctx.font='8px monospace';ctx.fillText(t+'с',x+2,12);}
+        }
+        
+        for(const tf of TARGET_FREQUENCIES){
+            const y=c.height-(tf/5000)*c.height;
+            ctx.strokeStyle='rgba(255,255,0,0.15)';ctx.lineWidth=0.5;
+            ctx.setLineDash([3,3]);
+            ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(c.width,y);ctx.stroke();
+            ctx.setLineDash([]);
+        }
+        
+        const mf=5000;
+        
+        for(let i=1;i<timeSeriesData.length;i++){
+            const x1=(timeSeriesData[i-1].time/tt)*c.width;
+            const x2=(timeSeriesData[i].time/tt)*c.width;
+            const y1=c.height-(timeSeriesData[i-1].freq/mf)*c.height;
+            const y2=c.height-(timeSeriesData[i].freq/mf)*c.height;
+            
+            const isTarget = isTargetFreq(timeSeriesData[i].freq);
+            const alpha=Math.min(0.9,timeSeriesData[i].weight/8);
+            
+            if (isTarget) {
+                const col = getColorHybrid(timeSeriesData[i].freq);
+                ctx.strokeStyle=`rgba(${col.r},${col.g},${col.b},${Math.min(0.95, alpha+0.2)})`;
+                ctx.lineWidth=2.5;
+                ctx.shadowColor=`rgba(${col.r},${col.g},${col.b},0.6)`;
+                ctx.shadowBlur=4;
+            } else {
+                ctx.strokeStyle=`rgba(0,255,0,${alpha})`;
+                ctx.lineWidth=1.5;
+                ctx.shadowColor='transparent';
+                ctx.shadowBlur=0;
+            }
+            
+            ctx.beginPath();
+            ctx.moveTo(x1,y1);
+            ctx.lineTo(x2,y2);
+            ctx.stroke();
+        }
+        
+        ctx.shadowColor='transparent';
+        ctx.shadowBlur=0;
+        
+        const cx=(timelinePosition/tt)*c.width;
+        els.timelineCursor.style.left=cx+'px';
+        els.timelineCursorTime.textContent=timelinePosition.toFixed(1)+'с';
+        els.timelineCursorTime.style.left=cx+'px';
+        els.timelineCurrentTime.textContent=timelinePosition.toFixed(1)+'с';
+        els.timelineTotalTime.textContent=tt.toFixed(1)+'с';
+        
+        if (isDraggingTimeline) {
+            els.reviewBadge.style.display = 'block';
+            els.timelineCursor.style.background = '#f00';
+            els.timelineCursor.style.boxShadow = '0 0 10px rgba(255,0,0,0.8)';
+        } else {
+            els.reviewBadge.style.display = 'none';
+            els.timelineCursor.style.background = '#0f0';
+            els.timelineCursor.style.boxShadow = '0 0 10px rgba(0,255,0,0.8)';
+        }
+    }
+
     function getDominantsFromHistogram(h){let mdf=0,mdv=0,mef=0,mev=0;for(const[f,d]of Object.entries(h)){if(d.totalDuration>mdv){mdv=d.totalDuration;mdf=parseFloat(f);}if(d.totalEnergy>mev){mev=d.totalEnergy;mef=parseFloat(f);}}return{duration:{freq:mdf},energy:{freq:mef}};}
     function updateGlobalHistogram(freq,amp,dt){if(freq<=0||dt<=0)return;const rf=roundFreq(freq),e=amp*amp*dt;if(!globalHistogram[rf])globalHistogram[rf]={totalDuration:0,totalEnergy:0};globalHistogram[rf].totalDuration+=dt;globalHistogram[rf].totalEnergy+=e;}
     function updateLast10sHistory(freq,amp){const ct=Date.now()/1000;if(freq>0)last10sHistory.push({time:ct,freq,amp});last10sHistory=last10sHistory.filter(p=>p.time>=ct-10);}
     function getHistogramFromHistory(history){const h={};for(let i=1;i<history.length;i++){const dt=history[i].time-history[i-1].time;if(dt>0&&dt<0.5){const rf=roundFreq(history[i].freq),e=history[i].amp*history[i].amp*dt;if(!h[rf])h[rf]={totalDuration:0,totalEnergy:0};h[rf].totalDuration+=dt;h[rf].totalEnergy+=e;}}return h;}
-    function getLast10sStats(){if(last10sHistory.length<2)return{dom:{duration:{freq:0},energy:{freq:0}},hist:{}};const h=getHistogramFromHistory(last10sHistory);return{dom:getDominantsFromHistogram(h),hist:h};}
-    function getIntervalStats(ts,te){if(timeSeriesData.length<2)return{dom:{duration:{freq:0},energy:{freq:0}},hist:{}};const h={};for(let i=1;i<timeSeriesData.length;i++){if(timeSeriesData[i].time>=ts&&timeSeriesData[i].time<=te){const dt=timeSeriesData[i].time-timeSeriesData[i-1].time;if(dt>0&&dt<0.5){const rf=roundFreq(timeSeriesData[i].freq),e=(timeSeriesData[i].weight/10)*dt;if(!h[rf])h[rf]={totalDuration:0,totalEnergy:0};h[rf].totalDuration+=dt;h[rf].totalEnergy+=e;}}}return{dom:getDominantsFromHistogram(h),hist:h};}
-    function updateAllStats(){const gd=getDominantsFromHistogram(globalHistogram);const gTargets=getTopTargetsFromHistogram(globalHistogram);els.liveDurationFreq.innerText=gd.duration.freq>0?gd.duration.freq.toFixed(1)+" Гц":"— Гц";els.liveDurationNote.innerText=freqToNote(gd.duration.freq);els.liveDurationTop.innerText=topTargetsToString(gTargets,'duration');if(showEnergy){els.liveEnergyFreq.innerText=gd.energy.freq>0?gd.energy.freq.toFixed(1)+" Гц":"— Гц";els.liveEnergyNote.innerText=freqToNote(gd.energy.freq);els.liveEnergyTop.innerText=topTargetsToString(gTargets,'energy');}const l10=getLast10sStats();const l10Targets=getTopTargetsFromHistogram(l10.hist);els.last10sDurationFreq.innerText=l10.dom.duration.freq>0?l10.dom.duration.freq.toFixed(1)+" Гц":"— Гц";els.last10sDurationNote.innerText=freqToNote(l10.dom.duration.freq);els.last10sDurationTop.innerText=topTargetsToString(l10Targets,'duration');if(showEnergy){els.last10sEnergyFreq.innerText=l10.dom.energy.freq>0?l10.dom.energy.freq.toFixed(1)+" Гц":"— Гц";els.last10sEnergyNote.innerText=freqToNote(l10.dom.energy.freq);els.last10sEnergyTop.innerText=topTargetsToString(l10Targets,'energy');}updateTimelineStats();updateTimelineCanvas();updateDetectedFreqsDisplay();updateMiniOverlay();}
-    function updateTimelineStats(){const tt=timeSeriesData.length>0?timeSeriesData[timeSeriesData.length-1].time:0;const ws=2;let ts=Math.max(0,timelinePosition-ws/2),te=Math.min(tt,timelinePosition+ws/2);if(tt<2){ts=0;te=tt;}const s=getIntervalStats(ts,te);const tTargets=getTopTargetsFromHistogram(s.hist);els.timelineDurationFreq.innerText=s.dom.duration.freq>0?s.dom.duration.freq.toFixed(1)+" Гц":"— Гц";els.timelineDurationNote.innerText=freqToNote(s.dom.duration.freq);els.timelineDurationTop.innerText=topTargetsToString(tTargets,'duration');if(showEnergy){els.timelineEnergyFreq.innerText=s.dom.energy.freq>0?s.dom.energy.freq.toFixed(1)+" Гц":"— Гц";els.timelineEnergyNote.innerText=freqToNote(s.dom.energy.freq);els.timelineEnergyTop.innerText=topTargetsToString(tTargets,'energy');}}
-    function renderSegments(){let comp=segmentAcc.filter(s=>s.finalized&&s.result>0).length;els.segCount.innerText=comp;els.segmentsList.innerHTML=SEGMENTS.map((seg,i)=>{const d=segmentAcc[i],sc=d.finalized?'completed':'pending',sd=`<span class="status-dot ${sc}"></span>`;let topStr='';if(d.finalized){const durTargets=getTopTargetsFromHistogram(d.durHist||{});const engTargets=getTopTargetsFromHistogram(d.engHist||{});const durTop=topTargetsToString(durTargets,'duration');const engTop=showEnergy?topTargetsToString(engTargets,'energy'):'';if(durTop||engTop)topStr=`<div class="segment-top">${durTop}${engTop?' | '+engTop:''}</div>`;}if(d.finalized)return`<div class="segment-row"><span class="segment-name">${sd}${seg.name}</span><span class="segment-freq">${d.result>0?d.result.toFixed(1)+' Гц':'—'}</span><span class="segment-note">${freqToNote(d.result)}</span>${topStr}</div>`;return`<div class="segment-row"><span class="segment-name">${sd}${seg.name}</span><span class="segment-freq">анализ...</span><span class="segment-note">—</span></div>`;}).join('');}
-    function finalizeSegment(i){if(segmentAcc[i].finalized)return;segmentAcc[i].result=segmentAcc[i].sumWeight>0?segmentAcc[i].sumFreqWeight/segmentAcc[i].sumWeight:0;segmentAcc[i].finalized=true;renderSegments();}
-    function addTimePoint(freq,w){if(freq<=0)return;timeSeriesData.push({time:(Date.now()-startTime)/1000,freq,weight:w});}
+    function getTargetsFromHistogram(h){const targets={};for(const[freq,data]of Object.entries(h)){const f=parseFloat(freq);const tf=findClosestFreq(f);if(tf!==null){if(!targets[tf])targets[tf]={duration:0,energy:0};targets[tf].duration+=data.totalDuration||0;targets[tf].energy+=data.totalEnergy||0;}}return targets;}
+
+    function updateAllStats(){
+        const gd = getDominantsFromHistogram(globalHistogram);
+        els.liveDurationFreq.innerText = gd.duration.freq > 0 ? gd.duration.freq.toFixed(1) + " Гц" : "— Гц";
+        els.liveDurationNote.innerText = freqToNote(gd.duration.freq);
+        
+        if (gd.duration.freq > 0) {
+            const c = getColorHybrid(gd.duration.freq);
+            els.liveDurationColor.innerHTML = `<span class="color-indicator" style="background:rgb(${c.r},${c.g},${c.b})"></span> ${c.name}`;
+            const rf = roundFreq(gd.duration.freq);
+            const mainDur = globalHistogram[rf] ? globalHistogram[rf].totalDuration : 0;
+            els.liveDurationTime.innerText = '⏱ ' + gd.duration.freq.toFixed(1) + ' Гц: ' + formatDuration(mainDur);
+        } else {
+            els.liveDurationColor.innerHTML = '';
+            els.liveDurationTime.innerText = '';
+        }
+        
+        const topFreqs = getTopFreqsByDuration(topFreqCount);
+        els.liveDurationTop.innerText = topFreqsToDisplayString(topFreqs);
+        updateTopFreqsDisplay();
+        
+        if (showEnergy) {
+            const gTargets = getTargetsFromHistogram(globalHistogram);
+            els.liveEnergyFreq.innerText = gd.energy.freq > 0 ? gd.energy.freq.toFixed(1) + " Гц" : "— Гц";
+            els.liveEnergyNote.innerText = freqToNote(gd.energy.freq);
+            
+            if (gd.energy.freq > 0) {
+                const c = getColorHybrid(gd.energy.freq);
+                els.liveEnergyColor.innerHTML = `<span class="color-indicator" style="background:rgb(${c.r},${c.g},${c.b})"></span> ${c.name}`;
+            } else {
+                els.liveEnergyColor.innerHTML = '';
+            }
+            
+            const arr = Object.entries(gTargets).sort((a,b)=>b[1].energy-a[1].energy).slice(0,topFreqCount);
+            els.liveEnergyTop.innerText = arr.length > 0 ? '🏆 '+arr.map(([f])=>f+' Гц').join(' · ') : '';
+        }
+        
+        if (last10sHistory.length >= 2) {
+            const h10 = getHistogramFromHistory(last10sHistory);
+            const d10 = getDominantsFromHistogram(h10);
+            els.last10sDurationFreq.innerText = d10.duration.freq > 0 ? d10.duration.freq.toFixed(1) + " Гц" : "— Гц";
+            els.last10sDurationNote.innerText = freqToNote(d10.duration.freq);
+            
+            if (d10.duration.freq > 0) {
+                const c = getColorHybrid(d10.duration.freq);
+                els.last10sDurationColor.innerHTML = `<span class="color-indicator" style="background:rgb(${c.r},${c.g},${c.b})"></span> ${c.name}`;
+            } else {
+                els.last10sDurationColor.innerHTML = '';
+            }
+            
+            const t10 = getTargetsFromHistogram(h10);
+            const arr10 = Object.entries(t10).sort((a,b)=>b[1].duration-a[1].duration).slice(0,topFreqCount);
+            els.last10sDurationTop.innerText = arr10.length > 0 ? '🏆 '+arr10.map(([f])=>f+' Гц').join(' · ') : '';
+        }
+        
+        updateTimelineStats();
+        updateTimelineCanvas();
+        updateMiniOverlay();
+    }
+
+    function updateTimelineStats(){
+        const tt = timeSeriesData.length > 0 ? timeSeriesData[timeSeriesData.length - 1].time : 0;
+        const ws = 2; let ts = Math.max(0, timelinePosition - ws / 2), te = Math.min(tt, timelinePosition + ws / 2);
+        if (tt < 2) { ts = 0; te = tt; }
+        if (timeSeriesData.length < 2) { 
+            els.timelineDurationFreq.innerText = "— Гц"; els.timelineDurationNote.innerText = "—"; 
+            els.timelineDurationColor.innerHTML = ''; els.timelineDurationTop.innerText = "";
+            return; 
+        }
+        const h = {};
+        for (let i = 1; i < timeSeriesData.length; i++) {
+            if (timeSeriesData[i].time >= ts && timeSeriesData[i].time <= te) {
+                const dt = timeSeriesData[i].time - timeSeriesData[i-1].time;
+                if (dt > 0 && dt < 0.5) {
+                    const rf = roundFreq(timeSeriesData[i].freq), e = (timeSeriesData[i].weight / 10) * dt;
+                    if (!h[rf]) h[rf] = { totalDuration: 0, totalEnergy: 0 };
+                    h[rf].totalDuration += dt; h[rf].totalEnergy += e;
+                }
+            }
+        }
+        const dom = getDominantsFromHistogram(h), targets = getTargetsFromHistogram(h);
+        els.timelineDurationFreq.innerText = dom.duration.freq > 0 ? dom.duration.freq.toFixed(1) + " Гц" : "— Гц";
+        els.timelineDurationNote.innerText = freqToNote(dom.duration.freq);
+        
+        if (dom.duration.freq > 0) {
+            const c = getColorHybrid(dom.duration.freq);
+            els.timelineDurationColor.innerHTML = `<span class="color-indicator" style="background:rgb(${c.r},${c.g},${c.b})"></span> ${c.name}`;
+        } else {
+            els.timelineDurationColor.innerHTML = '';
+        }
+        
+        const arrDur = Object.entries(targets).sort((a,b)=>b[1].duration-a[1].duration).slice(0,topFreqCount);
+        els.timelineDurationTop.innerText = arrDur.length > 0 ? '🏆 '+arrDur.map(([f])=>f+' Гц').join(' · ') : '';
+        
+        if (showEnergy) {
+            els.timelineEnergyFreq.innerText = dom.energy.freq > 0 ? dom.energy.freq.toFixed(1) + " Гц" : "— Гц";
+            els.timelineEnergyNote.innerText = freqToNote(dom.energy.freq);
+            
+            if (dom.energy.freq > 0) {
+                const c = getColorHybrid(dom.energy.freq);
+                els.timelineEnergyColor.innerHTML = `<span class="color-indicator" style="background:rgb(${c.r},${c.g},${c.b})"></span> ${c.name}`;
+            } else {
+                els.timelineEnergyColor.innerHTML = '';
+            }
+            
+            const arrEng = Object.entries(targets).sort((a,b)=>b[1].energy-a[1].energy).slice(0,topFreqCount);
+            els.timelineEnergyTop.innerText = arrEng.length > 0 ? '🏆 '+arrEng.map(([f])=>f+' Гц').join(' · ') : '';
+        }
+    }
+
     function getEventX(e){return e.clientX||(e.touches&&e.touches[0].clientX);}
-    els.timelineVisual.addEventListener('mousedown',e=>{isDraggingTimeline=true;updateTimelineFromEvent(e);});
-    els.timelineVisual.addEventListener('touchstart',e=>{isDraggingTimeline=true;updateTimelineFromEvent(e);e.preventDefault();});
-    document.addEventListener('mousemove',e=>{if(isDraggingTimeline)updateTimelineFromEvent(e);});
-    document.addEventListener('touchmove',e=>{if(isDraggingTimeline){updateTimelineFromEvent(e);e.preventDefault();}},{passive:false});
-    document.addEventListener('mouseup',()=>{isDraggingTimeline=false;});
-    document.addEventListener('touchend',()=>{isDraggingTimeline=false;});
-    function updateTimelineFromEvent(e){const r=els.timelineVisual.getBoundingClientRect(),x=getEventX(e)-r.left,ratio=Math.max(0,Math.min(1,x/r.width));if(timeSeriesData.length>0){timelinePosition=ratio*timeSeriesData[timeSeriesData.length-1].time;updateAllStats();}}
-    function processAudio(){if(!isRunning||!analyser||!audioCtx){if(isRunning)rafId=requestAnimationFrame(processAudio);return;}const ct=Date.now()/1000,dt=lastProcessedTime>0?ct-lastProcessedTime:0.016;lastProcessedTime=ct;const{freq,amp}=getPeak(analyser,audioCtx,1.3);let w=1;if(freq>0){els.currentFreq.innerText=freq.toFixed(1)+" Гц";els.currentNote.innerText=freqToNote(freq);const tf=findClosestFreq(freq);if(tf!==null){flashTarget(tf,dt);}else{els.freqDescription.innerText='';}const tmp=new Uint8Array(analyser.frequencyBinCount);analyser.getByteFrequencyData(tmp);let ma=Math.max(...tmp);if(ma>30)w=ma/30;}else{els.currentFreq.innerText="— Гц";els.currentNote.innerText="тишина";els.freqDescription.innerText='';}if(freq>25&&freq<5000&&dt>0&&dt<0.5)updateGlobalHistogram(freq,amp,dt);updateLast10sHistory(freq,amp);if(freq>25&&freq<5000&&isRunning)addTimePoint(freq,w);if(freq>25&&freq<5000){const rf=roundFreq(freq);const e=amp*amp*dt;for(let i=0;i<SEGMENTS.length;i++){if(!segmentAcc[i].finalized){segmentAcc[i].sumFreqWeight+=freq*w;segmentAcc[i].sumWeight+=w;if(!segmentAcc[i].durHist)segmentAcc[i].durHist={};if(!segmentAcc[i].durHist[rf])segmentAcc[i].durHist[rf]={totalDuration:0,totalEnergy:0};segmentAcc[i].durHist[rf].totalDuration+=dt;segmentAcc[i].durHist[rf].totalEnergy+=e;if(!segmentAcc[i].engHist)segmentAcc[i].engHist={};if(!segmentAcc[i].engHist[rf])segmentAcc[i].engHist[rf]={totalDuration:0,totalEnergy:0};segmentAcc[i].engHist[rf].totalDuration+=dt;segmentAcc[i].engHist[rf].totalEnergy+=e;}}}const et=(Date.now()-startTime)/1000;for(let i=0;i<SEGMENTS.length;i++){if(!segmentAcc[i].finalized&&et>=SEGMENTS[i].sec)finalizeSegment(i);}if(!isDraggingTimeline)timelinePosition=et;updateAllStats();if(isRunning)rafId=requestAnimationFrame(processAudio);}
-    function updateTimerUI(){if(!isRunning)return;const e=Math.floor((Date.now()-startTime)/1000),h=Math.floor(e/3600),m=Math.floor((e%3600)/60),s=e%60;els.timer.innerText=`${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;for(let i=0;i<SEGMENTS.length;i++){if(!segmentAcc[i].finalized&&e>=SEGMENTS[i].sec)finalizeSegment(i);}updateAllStats();}
-    async function start(){if(isRunning)return;segmentAcc=SEGMENTS.map(()=>({sumFreqWeight:0,sumWeight:0,finalized:false,result:0,durHist:{},engHist:{}}));timeSeriesData=[];globalHistogram={};last10sHistory=[];allDetectedFreqs=new Map();freqDurations={};lastProcessedTime=0;timelinePosition=0;currentGain=0;els.gainFill.style.width='0%';els.gainLabel.textContent='0%';els.detectedFreqs.innerHTML='';els.freqDescription.innerText='';renderSegments();updateAllStats();try{const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});mediaStream=stream;audioCtx=new(window.AudioContext||window.webkitAudioContext)();analyser=audioCtx.createAnalyser();analyser.fftSize=4096;analyser.smoothingTimeConstant=0.1;source=audioCtx.createMediaStreamSource(stream);source.connect(analyser);await audioCtx.resume();isRunning=true;startTime=Date.now();lastProcessedTime=Date.now()/1000;if(timerInterval)clearInterval(timerInterval);timerInterval=setInterval(updateTimerUI,200);rafId=requestAnimationFrame(processAudio);els.startBtn.disabled=true;els.stopBtn.disabled=false;}catch(err){alert("Нет доступа к микрофону. Разрешите использование микрофона.");}}
-    async function stop(){if(!isRunning)return;for(let i=0;i<SEGMENTS.length;i++){if(!segmentAcc[i].finalized)finalizeSegment(i);}isRunning=false;if(timerInterval)clearInterval(timerInterval);if(rafId)cancelAnimationFrame(rafId);if(source)source.disconnect();if(analyser)analyser.disconnect();if(audioCtx)await audioCtx.close();if(mediaStream)mediaStream.getTracks().forEach(t=>t.stop());audioCtx=null;els.startBtn.disabled=false;els.stopBtn.disabled=true;updateAllStats();renderSegments();}
     
-    // Keep screen on
-    async function keepScreenOn(){try{if('wakeLock' in navigator){await navigator.wakeLock.request('screen');}}catch(e){}}
-    keepScreenOn();
-    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')keepScreenOn();});
+    els.timelineVisual.addEventListener('mousedown',e=>{
+        isDraggingTimeline=true;
+        updateTimelineFromEvent(e);
+    });
+    els.timelineVisual.addEventListener('touchstart',e=>{
+        isDraggingTimeline=true;
+        updateTimelineFromEvent(e);
+        e.preventDefault();
+    });
     
-    // Фоновая работа
-    document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible' && isRunning) {
+    document.addEventListener('mousemove',e=>{
+        if(isDraggingTimeline) updateTimelineFromEvent(e);
+    });
+    document.addEventListener('touchmove',e=>{
+        if(isDraggingTimeline){
+            updateTimelineFromEvent(e);
+            e.preventDefault();
+        }
+    },{passive:false});
+    
+    document.addEventListener('mouseup',()=>{
+        if(isDraggingTimeline){
+            isDraggingTimeline=false;
+            if(timeSeriesData.length>0){
+                timelinePosition=timeSeriesData[timeSeriesData.length-1].time;
+            }
+            updateAllStats();
+        }
+    });
+    document.addEventListener('touchend',()=>{
+        if(isDraggingTimeline){
+            isDraggingTimeline=false;
+            if(timeSeriesData.length>0){
+                timelinePosition=timeSeriesData[timeSeriesData.length-1].time;
+            }
             updateAllStats();
         }
     });
     
-    // Мини-режим
-    function toggleMiniMode() {
-        isMiniMode = !isMiniMode;
-        if (isMiniMode) {
-            els.mainContainer.style.display = 'none';
-            els.miniOverlay.style.display = 'block';
-            els.miniModeBtn.classList.add('active');
-            els.miniModeBtn.textContent = '📱✓';
-            updateMiniOverlay();
-        } else {
-            els.mainContainer.style.display = 'flex';
-            els.miniOverlay.style.display = 'none';
-            els.miniModeBtn.classList.remove('active');
-            els.miniModeBtn.textContent = '📱';
+    function updateTimelineFromEvent(e){
+        const r=els.timelineVisual.getBoundingClientRect(),
+            x=getEventX(e)-r.left,
+            ratio=Math.max(0,Math.min(1,x/r.width));
+        if(timeSeriesData.length>0){
+            timelinePosition=ratio*timeSeriesData[timeSeriesData.length-1].time;
+            updateAllStats();
         }
     }
+
+    function processAudio(){
+        if(!isRunning||!analyser||!audioCtx){
+            if(isRunning)rafId=requestAnimationFrame(processAudio);
+            return;
+        }
+        const ct=Date.now()/1000,
+            dt=lastProcessedTime>0?ct-lastProcessedTime:0.016;
+        lastProcessedTime=ct;
+        const{freq,amp}=getPeak(analyser,audioCtx,1.3);
+        let w=1;
+        if(freq>0){
+            els.currentFreq.innerText=freq.toFixed(1)+" Гц";
+            els.currentNote.innerText=freqToNote(freq);
+            
+            const c = getColorHybrid(freq);
+            els.currentColorInfo.classList.remove('placeholder');
+            els.currentColorInfo.innerHTML = `🎨 Цвет: ${c.name} <span class="color-indicator" style="background:rgb(${c.r},${c.g},${c.b})"></span>`;
+            
+            const tf=findClosestFreq(freq);
+            if(tf!==null){
+                addFreqDuration(tf,dt);
+                els.currentFreq.classList.add('detected');
+                setTimeout(()=>els.currentFreq.classList.remove('detected'),1000);
+            }
+            const tmp=new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteFrequencyData(tmp);
+            let ma=Math.max(...tmp);
+            if(ma>30)w=ma/30;
+        }else{
+            els.currentFreq.innerText="— Гц";
+            els.currentNote.innerText="тишина";
+            els.currentColorInfo.classList.add('placeholder');
+            els.currentColorInfo.innerHTML = '🎨 Ожидание звука...';
+        }
+        if(freq>25&&freq<5000&&dt>0&&dt<0.5)updateGlobalHistogram(freq,amp,dt);
+        updateLast10sHistory(freq,amp);
+        if(freq>25&&freq<5000&&isRunning)timeSeriesData.push({time:(Date.now()-startTime)/1000,freq,weight:w});
+        trimTimeSeries();
+        
+        if(!isDraggingTimeline){
+            const et=(Date.now()-startTime)/1000;
+            timelinePosition=et;
+        }
+        
+        updateAllStats();
+        if(isRunning)rafId=requestAnimationFrame(processAudio);
+    }
     
-    // Перетаскивание мини-окна
-    let isDraggingMini = false, miniDragStartX = 0, miniDragStartY = 0, miniStartLeft = 0, miniStartTop = 0;
-    els.miniOverlay.addEventListener('mousedown', (e) => {
-        if (e.target === els.miniClose) return;
-        isDraggingMini = true;
-        miniDragStartX = e.clientX;
-        miniDragStartY = e.clientY;
-        const rect = els.miniOverlay.getBoundingClientRect();
-        miniStartLeft = rect.left;
-        miniStartTop = rect.top;
-    });
-    els.miniOverlay.addEventListener('touchstart', (e) => {
-        if (e.target === els.miniClose) return;
-        isDraggingMini = true;
-        miniDragStartX = e.touches[0].clientX;
-        miniDragStartY = e.touches[0].clientY;
-        const rect = els.miniOverlay.getBoundingClientRect();
-        miniStartLeft = rect.left;
-        miniStartTop = rect.top;
-        e.preventDefault();
-    });
-    document.addEventListener('mousemove', (e) => {
-        if (!isDraggingMini) return;
-        els.miniOverlay.style.left = (miniStartLeft + e.clientX - miniDragStartX) + 'px';
-        els.miniOverlay.style.top = (miniStartTop + e.clientY - miniDragStartY) + 'px';
-        els.miniOverlay.style.right = 'auto';
-    });
-    document.addEventListener('touchmove', (e) => {
-        if (!isDraggingMini) return;
-        els.miniOverlay.style.left = (miniStartLeft + e.touches[0].clientX - miniDragStartX) + 'px';
-        els.miniOverlay.style.top = (miniStartTop + e.touches[0].clientY - miniDragStartY) + 'px';
-        els.miniOverlay.style.right = 'auto';
-    });
-    document.addEventListener('mouseup', () => { isDraggingMini = false; });
-    document.addEventListener('touchend', () => { isDraggingMini = false; });
-    
-    els.miniModeBtn.onclick = toggleMiniMode;
-    els.miniClose.onclick = toggleMiniMode;
-    els.energyToggleBtn.onclick = () => { showEnergy = !showEnergy; updateEnergyVisibility(); updateAllStats(); renderSegments(); };
-    
-    els.startBtn.onclick=start;els.stopBtn.onclick=stop;els.stopBtn.disabled=true;els.saveBtn.onclick=saveSession;
+    function updateTimerUI(){
+        if(!isRunning)return;
+        const e=Math.floor((Date.now()-startTime)/1000),
+            h=Math.floor(e/3600),
+            m=Math.floor((e%3600)/60),
+            s=e%60;
+        els.timer.innerText=`${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        updateAllStats();
+    }
+
+    async function getAudioStream() {
+        try {
+            if (audioSource === 'system') {
+                const stream = await navigator.mediaDevices.getDisplayMedia({ audio: true, video: { width: 1, height: 1, frameRate: 1 } });
+                stream.getVideoTracks().forEach(t => t.stop());
+                return stream;
+            } else {
+                return await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+            }
+        } catch (e) {
+            audioSource = 'mic'; updateSourceIndicator();
+            return await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+        }
+    }
+
+    async function start(){if(isRunning)return;timeSeriesData=[];globalHistogram={};last10sHistory=[];freqDurations={};lastProcessedTime=0;timelinePosition=0;currentGain=0;els.gainFill.style.width='0%';els.gainLabel.textContent='0%';els.detectedFreqs.innerHTML='';els.currentColorInfo.classList.add('placeholder');els.currentColorInfo.innerHTML='🎨 Ожидание звука...';updateAllStats();try{mediaStream=await getAudioStream();audioCtx=new(window.AudioContext||window.webkitAudioContext)();analyser=audioCtx.createAnalyser();analyser.fftSize=4096;analyser.smoothingTimeConstant=0.1;source=audioCtx.createMediaStreamSource(mediaStream);source.connect(analyser);await audioCtx.resume();isRunning=true;startTime=Date.now();lastProcessedTime=Date.now()/1000;if(timerInterval)clearInterval(timerInterval);timerInterval=setInterval(updateTimerUI,200);rafId=requestAnimationFrame(processAudio);els.startBtn.disabled=true;els.stopBtn.disabled=false;els.resetBtn.disabled=false;if(isBackgroundMode)startBackgroundNotifications();}catch(err){alert("Нет доступа к аудио. Проверьте разрешения.");}}
+    async function stop(){if(!isRunning)return;isRunning=false;stopBackgroundNotifications();if(timerInterval)clearInterval(timerInterval);if(rafId)cancelAnimationFrame(rafId);if(source)source.disconnect();if(analyser)analyser.disconnect();if(audioCtx)await audioCtx.close();if(mediaStream)mediaStream.getTracks().forEach(t=>t.stop());audioCtx=null;els.startBtn.disabled=false;els.stopBtn.disabled=true;els.resetBtn.disabled=true;els.currentColorInfo.classList.add('placeholder');els.currentColorInfo.innerHTML='🎨 Ожидание звука...';updateAllStats();}
+    async function reset() { await stop(); await start(); }
+
+    function startBackgroundNotifications() { els.bgStatus.textContent = '📻 Фон'; notificationInterval = setInterval(updateBackgroundNotification, 10000); }
+    function stopBackgroundNotifications() { els.bgStatus.textContent = ''; if (notificationInterval) clearInterval(notificationInterval); notificationInterval = null; }
+
+    async function keepScreenOn(){try{if('wakeLock' in navigator){await navigator.wakeLock.request('screen');}}catch(e){}}
+    keepScreenOn();
+    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){keepScreenOn();if(isRunning)updateAllStats();}});
+
+    function toggleMiniMode(){isMiniMode=!isMiniMode;isPipMode=false;els.pipBtn.classList.remove('active');if(isMiniMode){els.mainContainer.style.display='none';els.miniOverlay.style.display='block';els.miniModeBtn.classList.add('active');updateMiniOverlay();}else{els.mainContainer.style.display='flex';els.miniOverlay.style.display='none';els.miniModeBtn.classList.remove('active');}}
+
+    async function togglePipMode() {
+        if (isPipMode) { isPipMode = false; els.pipBtn.classList.remove('active'); els.mainContainer.style.display = 'flex'; els.miniOverlay.style.display = 'none'; if (document.pictureInPictureElement) await document.exitPictureInPicture(); }
+        else { isMiniMode = false; els.miniModeBtn.classList.remove('active');
+            try { const pipCanvas = document.createElement('canvas'); pipCanvas.width = 300; pipCanvas.height = 200; const pipVideo = document.createElement('video'); pipVideo.muted = true; pipVideo.playsInline = true; pipVideo.srcObject = pipCanvas.captureStream(30); await pipVideo.play(); await pipVideo.requestPictureInPicture(); isPipMode = true; els.pipBtn.classList.add('active'); els.mainContainer.style.display = 'none'; els.miniOverlay.style.display = 'block'; els.miniOverlay.style.width = '200px'; updateMiniOverlay(); pipVideo.addEventListener('leavepictureinpicture', () => { isPipMode = false; els.pipBtn.classList.remove('active'); els.mainContainer.style.display = 'flex'; els.miniOverlay.style.display = 'none'; }); }
+            catch(e) { isPipMode = true; els.pipBtn.classList.add('active'); els.mainContainer.style.display = 'none'; els.miniOverlay.style.display = 'block'; updateMiniOverlay(); }
+        }
+    }
+
+    let isDraggingMini=false,miniDragStartX=0,miniDragStartY=0,miniStartLeft=0,miniStartTop=0;
+    els.miniOverlay.addEventListener('mousedown',e=>{if(e.target===els.miniClose)return;isDraggingMini=true;miniDragStartX=e.clientX;miniDragStartY=e.clientY;const r=els.miniOverlay.getBoundingClientRect();miniStartLeft=r.left;miniStartTop=r.top;});
+    els.miniOverlay.addEventListener('touchstart',e=>{if(e.target===els.miniClose)return;isDraggingMini=true;miniDragStartX=e.touches[0].clientX;miniDragStartY=e.touches[0].clientY;const r=els.miniOverlay.getBoundingClientRect();miniStartLeft=r.left;miniStartTop=r.top;e.preventDefault();});
+    document.addEventListener('mousemove',e=>{if(!isDraggingMini)return;els.miniOverlay.style.left=(miniStartLeft+e.clientX-miniDragStartX)+'px';els.miniOverlay.style.top=(miniStartTop+e.clientY-miniDragStartY)+'px';els.miniOverlay.style.right='auto';});
+    document.addEventListener('touchmove',e=>{if(!isDraggingMini)return;els.miniOverlay.style.left=(miniStartLeft+e.touches[0].clientX-miniDragStartX)+'px';els.miniOverlay.style.top=(miniStartTop+e.touches[0].clientY-miniDragStartY)+'px';els.miniOverlay.style.right='auto';});
+    document.addEventListener('mouseup',()=>{isDraggingMini=false;});
+    document.addEventListener('touchend',()=>{isDraggingMini=false;});
+
+    els.miniModeBtn.onclick=toggleMiniMode;
+    els.miniClose.onclick=()=>{isMiniMode=false;isPipMode=false;els.mainContainer.style.display='flex';els.miniOverlay.style.display='none';els.miniModeBtn.classList.remove('active');els.pipBtn.classList.remove('active');};
+    els.energyToggleBtn.onclick=()=>{showEnergy=!showEnergy;updateEnergyVisibility();updateAllStats();};
+    els.settingsBtn.onclick=()=>{els.settingsPanel.classList.toggle('show');};
+    els.pipBtn.onclick=togglePipMode;
+    els.bgModeBtn.onclick=()=>{isBackgroundMode=!isBackgroundMode;if(isBackgroundMode){els.bgModeBtn.classList.add('active');if(isRunning)startBackgroundNotifications();}else{els.bgModeBtn.classList.remove('active');stopBackgroundNotifications();}};
+    els.sourceBtn.onclick=async()=>{if(isRunning)await stop();audioSource=audioSource==='mic'?'system':'mic';updateSourceIndicator();if(isRunning)await start();};
+
+    els.topCountSlider.oninput=()=>{topFreqCount=parseInt(els.topCountSlider.value);els.topCountValue.textContent=topFreqCount;updateAllStats();};
+    els.historySlider.oninput=()=>{historyMinutes=parseInt(els.historySlider.value);els.historyValue.textContent=historyMinutes+' мин';trimTimeSeries();updateAllStats();};
+    els.minDurationSlider.oninput=()=>{minDuration=parseFloat(els.minDurationSlider.value);els.minDurationValue.textContent=minDuration.toFixed(1)+'с';updateAllStats();};
+
+    els.startBtn.onclick=start;els.stopBtn.onclick=stop;els.resetBtn.onclick=reset;els.stopBtn.disabled=true;els.resetBtn.disabled=true;els.saveBtn.onclick=saveSession;
     window.loadSession=loadSession;
-    setInterval(()=>{if(Object.keys(freqDurations).length>0)updateDetectedFreqsDisplay();if(isMiniMode)updateMiniOverlay();},500);
+    setInterval(()=>{if(isRunning)updateTopFreqsDisplay();if(isMiniMode||isPipMode)updateMiniOverlay();},500);
     window.addEventListener('resize',()=>{if(timeSeriesData.length>0)updateTimelineCanvas();});
-    document.addEventListener('click',(e)=>{if(!e.target.closest('.detected-freq-tag')&&!e.target.closest('#miniOverlay'))hideTooltip();});
-    renderSessions();renderSegments();updateAllStats();
+    document.addEventListener('click',e=>{if(!e.target.closest('.detected-freq-tag')&&!e.target.closest('#miniOverlay')&&!e.target.closest('#settingsBtn')&&!e.target.closest('#settingsPanel'))hideTooltip();});
+    renderSessions();updateAllStats();updateSourceIndicator();
 </script>
 </body>
 </html>
